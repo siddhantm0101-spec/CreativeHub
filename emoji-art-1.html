@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Emoji Art — Photo to Emoji Pixels</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#08080f;--surface:#0f0f1c;--card:#141425;
+  --border:#ffffff10;--border2:#ffffff1e;
+  --text:#eeeeff;--muted:#5a5a8a;
+  --amber:#f59e0b;--rose:#f43f5e;--blue:#3b82f6;
+  --green:#10b981;--purple:#9333ea;--teal:#06b6d4;
+}
+html{scroll-behavior:smooth}
+body{
+  font-family:'DM Sans',sans-serif;
+  background:var(--bg);color:var(--text);
+  min-height:100vh;overflow-x:hidden;
+}
+body::before{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:
+    radial-gradient(ellipse 80% 60% at 15% 10%,#f59e0b0a,transparent 55%),
+    radial-gradient(ellipse 60% 50% at 85% 85%,#9333ea0c,transparent 55%),
+    radial-gradient(ellipse 50% 40% at 50% 50%,#f43f5e08,transparent 55%);
+}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+
+/* ===== HEADER ===== */
+header{
+  position:relative;z-index:1;
+  padding:2.5rem 1.5rem 0;
+  text-align:center;
+}
+.badge{
+  display:inline-flex;align-items:center;gap:0.4rem;
+  background:#ffffff08;border:1px solid var(--border2);
+  border-radius:100px;padding:0.28rem 0.9rem;
+  font-size:0.62rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);
+  margin-bottom:1rem;
+}
+.badge-dot{width:5px;height:5px;border-radius:50%;background:var(--amber);animation:pulse 2s ease infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.3;transform:scale(0.8)}}
+h1{
+  font-family:'Syne',sans-serif;
+  font-size:clamp(2rem,6vw,3.8rem);
+  font-weight:800;line-height:0.9;
+  letter-spacing:-0.05em;
+  margin-bottom:0.8rem;
+}
+h1 span{
+  background:linear-gradient(120deg,var(--amber),var(--rose) 50%,var(--purple));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.subtitle{color:var(--muted);font-size:0.88rem;max-width:420px;margin:0 auto 2.5rem;line-height:1.7}
+
+/* ===== MAIN LAYOUT ===== */
+main{
+  position:relative;z-index:1;
+  max-width:980px;margin:0 auto;
+  padding:0 1.2rem 3rem;
+  display:grid;grid-template-columns:1fr 1fr;gap:1.2rem;
+}
+@media(max-width:700px){main{grid-template-columns:1fr}}
+
+/* ===== PANELS ===== */
+.panel{
+  background:var(--card);border:1px solid var(--border2);
+  border-radius:18px;padding:1.3rem;
+}
+.panel-title{
+  display:flex;align-items:center;gap:0.55rem;
+  font-family:'Syne',sans-serif;font-size:0.88rem;font-weight:700;
+  margin-bottom:1.1rem;
+}
+.panel-icon{
+  width:30px;height:30px;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;font-size:0.85rem;flex-shrink:0;
+}
+
+/* ===== UPLOAD ===== */
+.upload-zone{
+  border:2px dashed var(--border2);border-radius:12px;
+  padding:2rem 1rem;text-align:center;cursor:pointer;
+  transition:all 0.25s;background:var(--surface);
+  display:flex;flex-direction:column;align-items:center;gap:0.6rem;
+}
+.upload-zone:hover,.upload-zone.drag{
+  border-color:var(--amber);background:#f59e0b06;
+}
+.upload-icon{font-size:2.2rem}
+.upload-title{font-family:'Syne',sans-serif;font-size:0.85rem;font-weight:700}
+.upload-hint{font-size:0.68rem;color:var(--muted)}
+#preview-img{
+  width:100%;border-radius:10px;margin-top:0.8rem;
+  max-height:240px;object-fit:contain;display:none;
+}
+
+/* ===== CONTROLS ===== */
+.controls-grid{display:flex;flex-direction:column;gap:0.9rem}
+.ctrl-row{display:grid;grid-template-columns:1fr 1fr;gap:0.7rem}
+.ctrl{display:flex;flex-direction:column;gap:0.35rem}
+.ctrl-label{
+  font-size:0.6rem;font-weight:700;letter-spacing:0.12em;
+  text-transform:uppercase;color:var(--muted);
+  display:flex;justify-content:space-between;align-items:center;
+}
+.ctrl-label span{color:var(--text);font-size:0.65rem;letter-spacing:0}
+select,input[type=range]{
+  width:100%;background:var(--surface);border:1px solid var(--border2);
+  border-radius:7px;color:var(--text);font-size:0.73rem;
+  font-family:'DM Sans',sans-serif;outline:none;transition:border-color 0.2s;
+}
+select{padding:0.4rem 0.6rem;cursor:pointer;appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%235a5a8a' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 0.6rem center;padding-right:1.8rem;
+}
+select:focus{border-color:var(--amber)}
+input[type=range]{
+  -webkit-appearance:none;height:4px;border-radius:2px;border:none;padding:0;
+  background:var(--border2);cursor:pointer;
+}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:14px;height:14px;border-radius:50%;
+  background:var(--amber);cursor:pointer;border:2px solid var(--bg);
+  transition:transform 0.15s;
+}
+input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2)}
+input[type=range].blue::-webkit-slider-thumb{background:var(--blue)}
+input[type=range].rose::-webkit-slider-thumb{background:var(--rose)}
+
+/* ===== OUTPUT PANEL ===== */
+.output-panel{grid-column:1/-1}
+.output-wrap{
+  background:var(--surface);border-radius:12px;
+  border:1px solid var(--border2);
+  min-height:220px;position:relative;overflow:auto;
+  text-align:center;padding:0.8rem;
+}
+#placeholder{
+  position:absolute;inset:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:0.6rem;color:var(--muted);pointer-events:none;
+}
+#placeholder .ph-emoji{font-size:3rem;opacity:0.4}
+#placeholder .ph-text{font-size:0.78rem}
+#emojiArtCanvas{display:none;max-width:100%;border-radius:8px}
+
+/* ===== ACTION BUTTONS ===== */
+.actions{display:flex;gap:0.6rem;flex-wrap:wrap;margin-top:0.9rem}
+.btn{
+  display:inline-flex;align-items:center;gap:0.4rem;
+  padding:0.48rem 1rem;border-radius:8px;font-size:0.74rem;font-weight:600;
+  font-family:'DM Sans',sans-serif;cursor:pointer;border:none;transition:all 0.2s;
+}
+.btn:disabled{opacity:0.35;cursor:not-allowed}
+.btn-primary{background:linear-gradient(135deg,var(--amber),#ef4444);color:#fff}
+.btn-primary:not(:disabled):hover{opacity:0.88;transform:translateY(-1px)}
+.btn-secondary{background:var(--surface);border:1px solid var(--border2);color:var(--text)}
+.btn-secondary:not(:disabled):hover{background:var(--border2)}
+.btn-green{background:linear-gradient(135deg,var(--green),#059669);color:#fff}
+.btn-green:not(:disabled):hover{opacity:0.88;transform:translateY(-1px)}
+.btn-purple{background:linear-gradient(135deg,var(--purple),#4f46e5);color:#fff}
+.btn-purple:not(:disabled):hover{opacity:0.88;transform:translateY(-1px)}
+
+/* ===== TOAST ===== */
+#toast{
+  position:fixed;bottom:1.5rem;right:1.5rem;z-index:9999;
+  background:var(--card);border:1px solid var(--border2);
+  border-radius:10px;padding:0.65rem 1rem;
+  font-size:0.75rem;display:flex;align-items:center;gap:0.5rem;
+  transform:translateY(80px);opacity:0;
+  transition:all 0.3s cubic-bezier(0.23,1,0.32,1);pointer-events:none;
+}
+#toast.show{transform:translateY(0);opacity:1}
+#toast.ok .ti{color:var(--green)}
+#toast.err .ti{color:var(--rose)}
+#toast.info .ti{color:var(--blue)}
+
+/* ===== PROGRESS ===== */
+.progress-bar{
+  width:100%;height:3px;background:var(--border2);border-radius:2px;
+  margin-bottom:0.8rem;overflow:hidden;display:none;
+}
+.progress-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--amber),var(--rose));transition:width 0.2s;border-radius:2px}
+
+/* ===== RENDER STATS ===== */
+#stats{
+  font-size:0.65rem;color:var(--muted);
+  margin-top:0.6rem;display:none;
+  display:flex;gap:1rem;flex-wrap:wrap;
+}
+.stat-item{display:flex;align-items:center;gap:0.25rem}
+.stat-dot{width:5px;height:5px;border-radius:50%;background:var(--amber)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="badge"><span class="badge-dot"></span>Image → Emoji Pixels</div>
+  <h1>Emoji <span>Art</span><br>Converter</h1>
+  <p class="subtitle">Apni koi bhi photo upload karo — har pixel ek emoji ban jaayega. Asal colors se match hota hai.</p>
+</header>
+
+<main>
+  <!-- LEFT: Upload -->
+  <div class="panel">
+    <div class="panel-title">
+      <div class="panel-icon" style="background:linear-gradient(135deg,#f59e0b,#ef4444)">🖼️</div>
+      Photo Upload
+    </div>
+
+    <label id="dropZone" class="upload-zone">
+      <input type="file" id="fileInput" accept="image/*,.heic,.heif" style="display:none"/>
+      <div class="upload-icon">📸</div>
+      <div class="upload-title">Photo Yahan Drop Karo</div>
+      <div class="upload-hint">PNG, JPG, WEBP, GIF, <strong style="color:#f59e0b">HEIC/HEIF</strong> — koi bhi format chalega</div>
+      <div class="upload-hint" style="color:#f59e0b44;font-size:0.62rem">Ya click karke select karo</div>
+    </label>
+
+    <img id="preview-img" alt="preview"/>
+  </div>
+
+  <!-- RIGHT: Controls -->
+  <div class="panel">
+    <div class="panel-title">
+      <div class="panel-icon" style="background:linear-gradient(135deg,#9333ea,#4f46e5)">⚙️</div>
+      Settings
+    </div>
+
+    <div class="controls-grid">
+      <div class="ctrl-row">
+        <div class="ctrl">
+          <div class="ctrl-label">Grid Size</div>
+          <select id="gridSize">
+            <option value="25">25 — Fast</option>
+            <option value="40">40 — Normal</option>
+            <option value="55" selected>55 — Detailed</option>
+            <option value="75">75 — HD</option>
+            <option value="100">100 — Ultra</option>
+            <option value="130">130 — 4K</option>
+            <option value="160">160 — Max Quality</option>
+          </select>
+        </div>
+        <div class="ctrl">
+          <div class="ctrl-label">Emoji Set</div>
+          <select id="emojiSet">
+            <option value="mixed" selected>🌈 Mixed (Best)</option>
+            <option value="colorblocks">🟥 Color Blocks</option>
+            <option value="faces">😀 Faces</option>
+            <option value="nature">🌿 Nature</option>
+            <option value="hearts">❤️ Hearts</option>
+            <option value="food">🍕 Food</option>
+            <option value="space">🌌 Space</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="ctrl">
+        <div class="ctrl-label">Cell Size <span id="cellSizeVal">18px</span></div>
+        <input type="range" id="cellSize" min="10" max="36" value="18"
+          oninput="document.getElementById('cellSizeVal').textContent=this.value+'px';scheduleRender()"/>
+      </div>
+
+      <div class="ctrl">
+        <div class="ctrl-label">Brightness <span id="brightnessVal">0</span></div>
+        <input type="range" class="blue" id="brightness" min="-80" max="80" value="0"
+          oninput="document.getElementById('brightnessVal').textContent=this.value;scheduleRender()"/>
+      </div>
+
+      <div class="ctrl">
+        <div class="ctrl-label">Contrast <span id="contrastVal">1.2×</span></div>
+        <input type="range" class="rose" id="contrast" min="0.5" max="3.0" step="0.1" value="1.2"
+          oninput="document.getElementById('contrastVal').textContent=parseFloat(this.value).toFixed(1)+'×';scheduleRender()"/>
+      </div>
+
+      <button class="btn btn-primary" id="renderBtn" disabled onclick="renderEmojiArt()">
+        🎨 Emoji Art Banao
+      </button>
+    </div>
+  </div>
+
+  <!-- BOTTOM: Output (full width) -->
+  <div class="panel output-panel">
+    <div class="panel-title">
+      <div class="panel-icon" style="background:linear-gradient(135deg,#06b6d4,#3b82f6)">✨</div>
+      Emoji Art Output
+    </div>
+
+    <div class="progress-bar" id="progressBar">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+
+    <div class="output-wrap">
+      <div id="placeholder">
+        <div class="ph-emoji">🎭</div>
+        <div class="ph-text">Pehle photo upload karo, phir "Emoji Art Banao" click karo</div>
+      </div>
+      <canvas id="emojiArtCanvas"></canvas>
+    </div>
+
+    <div id="stats">
+      <div class="stat-item"><span class="stat-dot"></span><span id="statGrid">—</span> grid</div>
+      <div class="stat-item"><span class="stat-dot" style="background:var(--blue)"></span><span id="statEmojis">—</span> emojis</div>
+      <div class="stat-item"><span class="stat-dot" style="background:var(--green)"></span><span id="statTime">—</span> render time</div>
+      <div class="stat-item"><span class="stat-dot" style="background:var(--purple)"></span><span id="statSet">—</span></div>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-green" id="dlBtn" disabled onclick="downloadArt()">⬇ PNG Download</button>
+      <button class="btn btn-purple" id="copyBtn" disabled onclick="copyArt()">📋 Copy</button>
+      <button class="btn btn-secondary" id="randBtn" disabled onclick="randomizeSet()">🎲 Random Set</button>
+      <button class="btn btn-secondary" id="resetBtn" onclick="resetAll()" style="margin-left:auto">↺ Reset</button>
+    </div>
+  </div>
+</main>
+
+<!-- Toast -->
+<div id="toast"><span class="ti">●</span><span id="toastMsg"></span></div>
+
+<script>
+// =============================================
+// STATE
+// =============================================
+let srcImg = null;
+let emojiColorCache = {};
+let renderTimer = null;
+let isRendering = false;
+let heicLib = null;
+
+// ===== HEIC Library Loader =====
+async function loadHeicLib() {
+  if (heicLib) return heicLib;
+  return new Promise(resolve => {
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/heic2any/0.0.4/heic2any.min.js';
+    s.onload = () => { heicLib = window.heic2any; resolve(heicLib); };
+    s.onerror = () => resolve(null);
+    document.head.appendChild(s);
+  });
+}
+
+// =============================================
+// EMOJI SETS — curated for color coverage
+// =============================================
+const EMOJI_SETS = {
+  mixed: [
+    // Deep reds
+    '🟥','🔴','❤️','🍎','🍒','🌹','🌺','💋','🫑',
+    // Oranges
+    '🟧','🟠','🧡','🍊','🔶','🦊','🎃','🥕',
+    // Yellows
+    '🟨','🟡','⭐','☀️','🌟','💛','🍋','🌻','🔆','🌕',
+    // Yellow-greens
+    '🥦','🥑','🫒',
+    // Greens
+    '🟩','🟢','💚','🍀','🌿','🌱','🌲','🍃','🥝',
+    // Teals/Cyans
+    '🩵','🫧','🌊','💧','🧊',
+    // Blues
+    '🟦','🔵','💙','🫐','🌀',
+    // Purples
+    '🟪','🟣','💜','🍇','🔮','🌸',
+    // Pinks
+    '💗','🌷','🎀','🩷','🍑',
+    // Browns
+    '🟫','🤎','🍂','🍁','☕','🪵','🌰',
+    // Blacks/Dark
+    '⬛','⚫','🖤','▪️','🌑','🍫',
+    // Whites/Light
+    '⬜','⚪','🤍','☁️','❄️','🕊️','🌫️',
+    // Grays
+    '🩶','🌫️','🔘',
+  ],
+  colorblocks: [
+    '🟥','🟧','🟨','🟩','🟦','🟪','🟫','⬛','⬜',
+    '🔴','🟠','🟡','🟢','🔵','🟣','⚫','⚪','🟤',
+    '🔶','🔷','🔸','🔹','🔺','🔻',
+    '🌕','🌑','🌒','🌓','🌔','🌖','🌗','🌘',
+    '▪️','▫️','◾','◽','◼','◻',
+  ],
+  faces: [
+    '😀','😃','😄','😁','😆','😅','😂','🤣','😊','😇',
+    '🙂','😉','😌','😍','🥰','😘','😗','😙','😚','😋',
+    '😛','😜','🤪','😝','🤑','🤗','🤔','😶','😑','😬',
+    '🙄','😯','😲','😳','🥺','😦','😰','😥','😢','😭',
+    '😱','😖','😣','😞','😩','😫','🥱','😤','😡','🤯',
+    '🥵','🥶','😷','🤢','🤧','🤠','🥳','🤩','😴','😵',
+  ],
+  nature: [
+    '🌸','🌺','🌻','🌹','🌷','🌼','🌿','🍀','🍃','🌱',
+    '🌲','🌳','🌴','🍂','🍁','🌾','🌵','🌊','🌈','☁️',
+    '🍎','🍊','🍋','🍇','🍓','🫐','🍒','🍑','🥭','🍍',
+    '🥝','🍅','🥦','🥬','🥑','🍆','🌽','🥕','🌰','🍄',
+    '🌙','☀️','⭐','🌟','❄️','🔥','💧','🌊','⛰️','🏔️',
+  ],
+  hearts: [
+    '❤️','🧡','💛','💚','💙','💜','🖤','🤍','🤎',
+    '❤️‍🔥','💕','💞','💓','💗','💖','💘','💝','💟','♥️',
+    '🩷','🩵','🩶',
+  ],
+  food: [
+    '🍎','🍊','🍋','🍇','🍓','🍒','🍑','🥭','🍍','🥥',
+    '🥝','🍅','🫐','🍆','🥑','🫑','🥦','🥬','🥕','🌽',
+    '🍕','🍔','🌮','🍜','🍣','🍩','🧁','🎂','🍰','🍫',
+    '🍬','🍭','🍦','☕','🧃','🥤','🍺','🍷','🥛','🧈',
+  ],
+  space: [
+    '⭐','🌟','💫','✨','🌠','🌌','☀️','🌙','🌛','🌜',
+    '🌕','🌑','🌒','🌓','🌔','🌖','🌗','🌘',
+    '⚡','🌀','❄️','🔥','💥','🎆','🎇','🔮',
+    '🪐','🌍','🌎','🌏','☄️','🛸','🚀','👽','🌌',
+  ],
+};
+
+// =============================================
+// EMOJI COLOR SAMPLING — actual canvas render (high quality)
+// =============================================
+const _sCanvas = document.createElement('canvas');
+_sCanvas.width = 64; _sCanvas.height = 64;
+const _sCtx = _sCanvas.getContext('2d', {willReadFrequently: true});
+
+function sampleEmojiColor(emoji) {
+  if (emojiColorCache[emoji]) return emojiColorCache[emoji];
+  const sz = 64;
+  _sCtx.clearRect(0, 0, sz, sz);
+  _sCtx.font = `${sz * 0.85}px serif`;
+  _sCtx.textAlign = 'center';
+  _sCtx.textBaseline = 'middle';
+  _sCtx.fillText(emoji, sz / 2, sz / 2);
+  const data = _sCtx.getImageData(0, 0, sz, sz).data;
+  let rS=0, gS=0, bS=0, n=0;
+  // Weighted center sampling — center pixels matter more
+  for (let y=0; y<sz; y++) {
+    for (let x=0; x<sz; x++) {
+      const i = (y*sz+x)*4;
+      if (data[i+3] > 40) {
+        const cx = x - sz/2, cy = y - sz/2;
+        const w = Math.max(0.1, 1 - Math.sqrt(cx*cx + cy*cy)/(sz*0.7));
+        rS+=data[i]*w; gS+=data[i+1]*w; bS+=data[i+2]*w; n+=w;
+      }
+    }
+  }
+  const c = n > 0 ? [Math.round(rS/n), Math.round(gS/n), Math.round(bS/n)] : [128,128,128];
+  emojiColorCache[emoji] = c;
+  return c;
+}
+
+function prewarm(list) { list.forEach(sampleEmojiColor); }
+
+// Perceptual weighted distance (green-biased human vision)
+function colorDist(c1, c2) {
+  const dr=c1[0]-c2[0], dg=c1[1]-c2[1], db=c1[2]-c2[2];
+  return 2*dr*dr + 4*dg*dg + 3*db*db;
+}
+
+// Build color→emoji lookup table (higher precision)
+function buildLookup(list) {
+  const lut = {};
+  const step = 8; // finer grid = better color matching
+  for (let r=0;r<256;r+=step) for (let g=0;g<256;g+=step) for (let b=0;b<256;b+=step) {
+    const k = `${r>>3}_${g>>3}_${b>>3}`;
+    if (lut[k]) continue;
+    let best=list[0], bestD=Infinity;
+    for (const e of list) {
+      const d = colorDist([r,g,b], emojiColorCache[e] || sampleEmojiColor(e));
+      if (d < bestD) { bestD=d; best=e; }
+    }
+    lut[k] = best;
+  }
+  return lut;
+}
+
+function lookupEmoji(r, g, b, lut) {
+  return lut[`${(r>>3)}_${(g>>3)}_${(b>>3)}`] || '⬜';
+}
+
+function adjustPixel(v, br, co) {
+  return Math.max(0, Math.min(255, Math.round((v - 128) * co + 128 + br)));
+}
+
+// =============================================
+// IMAGE LOADING
+// =============================================
+function loadImgURL(url) {
+  return new Promise((res, rej) => {
+    const img = new Image();
+    img.onload = () => res(img);
+    img.onerror = rej;
+    img.src = url;
+  });
+}
+
+async function handleFile(file) {
+  if (!file) return;
+  const name = (file.name || '').toLowerCase();
+  const isHeic = name.endsWith('.heic') || name.endsWith('.heif') ||
+                 file.type === 'image/heic' || file.type === 'image/heif';
+
+  // Allow image/* OR heic (heic type may be empty on some browsers)
+  if (!file.type.startsWith('image/') && !isHeic) {
+    toast('Sirf image files support hoti hain', 'err'); return;
+  }
+
+  toast('Image load ho rahi hai…', 'info');
+
+  try {
+    let blob = file;
+
+    // HEIC/HEIF conversion
+    if (isHeic) {
+      toast('HEIC convert ho raha hai…', 'info');
+      const lib = await loadHeicLib();
+      if (!lib) { toast('HEIC library load nahi hui, please JPG use karein', 'err'); return; }
+      const result = await lib({ blob: file, toType: 'image/jpeg', quality: 0.95 });
+      // heic2any can return array or single blob
+      blob = Array.isArray(result) ? result[0] : result;
+    }
+
+    const url = URL.createObjectURL(blob);
+    srcImg = await loadImgURL(url);
+
+    // Show preview
+    const prev = document.getElementById('preview-img');
+    prev.src = url;
+    prev.style.display = 'block';
+
+    // Update dropzone label
+    const dz = document.getElementById('dropZone');
+    const displayName = file.name || 'image';
+    dz.querySelector('.upload-title').textContent = '✅ ' + (displayName.length > 30 ? displayName.slice(0,27)+'…' : displayName);
+    dz.style.borderColor = 'var(--amber)';
+
+    document.getElementById('renderBtn').disabled = false;
+    toast('Image ready! Emoji art banao 🎨', 'ok');
+
+    // Auto-render
+    scheduleRender();
+  } catch(e) {
+    toast('Image load failed: ' + (e.message || e), 'err');
+  }
+}
+
+// =============================================
+// RENDER
+// =============================================
+let renderScheduled = false;
+function scheduleRender() {
+  if (!srcImg) return;
+  if (renderScheduled) return;
+  renderScheduled = true;
+  clearTimeout(renderTimer);
+  renderTimer = setTimeout(() => {
+    renderScheduled = false;
+    renderEmojiArt();
+  }, 400);
+}
+
+function renderEmojiArt() {
+  if (!srcImg || isRendering) return;
+  isRendering = true;
+
+  const cols     = parseInt(document.getElementById('gridSize').value) || 55;
+  const cellSize = parseInt(document.getElementById('cellSize').value) || 18;
+  const setName  = document.getElementById('emojiSet').value;
+  const brightness = parseInt(document.getElementById('brightness').value) || 0;
+  const contrast   = parseFloat(document.getElementById('contrast').value) || 1.2;
+  const list = EMOJI_SETS[setName] || EMOJI_SETS.mixed;
+
+  // Show loading
+  const ph = document.getElementById('placeholder');
+  ph.style.display = 'flex';
+  ph.querySelector('.ph-emoji').textContent = '⏳';
+  ph.querySelector('.ph-text').textContent = 'Rendering emoji art…';
+  document.getElementById('emojiArtCanvas').style.display = 'none';
+
+  const pb = document.getElementById('progressBar');
+  const pf = document.getElementById('progressFill');
+  pb.style.display = 'block';
+  pf.style.width = '0%';
+
+  const t0 = performance.now();
+
+  requestAnimationFrame(() => {
+    pf.style.width = '20%';
+
+    // Prewarm colors
+    prewarm(list);
+    pf.style.width = '40%';
+
+    // Build LUT
+    const lut = buildLookup(list);
+    pf.style.width = '60%';
+
+    // Sample source image
+    const aspect = srcImg.height / srcImg.width;
+    const rows = Math.round(cols * aspect);
+
+    const sc = document.createElement('canvas');
+    sc.width = cols; sc.height = rows;
+    const sctx = sc.getContext('2d', {willReadFrequently: true});
+    sctx.imageSmoothingEnabled = true;
+    sctx.imageSmoothingQuality = 'high';
+    sctx.drawImage(srcImg, 0, 0, cols, rows);
+    const imgData = sctx.getImageData(0, 0, cols, rows);
+    pf.style.width = '75%';
+
+    // Draw output
+    const out = document.getElementById('emojiArtCanvas');
+    out.width  = cols * cellSize;
+    out.height = rows * cellSize;
+    const ctx = out.getContext('2d');
+    ctx.clearRect(0, 0, out.width, out.height);
+
+    const fs = cellSize * 0.88;
+    ctx.font = `${fs}px serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    for (let row=0; row<rows; row++) {
+      for (let col=0; col<cols; col++) {
+        const idx = (row*cols+col)*4;
+        if (imgData.data[idx+3] < 20) continue;
+        const r = adjustPixel(imgData.data[idx],   brightness, contrast);
+        const g = adjustPixel(imgData.data[idx+1], brightness, contrast);
+        const b = adjustPixel(imgData.data[idx+2], brightness, contrast);
+        const emoji = lookupEmoji(r, g, b, lut);
+
+        // Background fill for color continuity
+        ctx.fillStyle = `rgb(${r},${g},${b})`;
+        ctx.fillRect(col*cellSize, row*cellSize, cellSize, cellSize);
+        ctx.fillText(emoji, col*cellSize + cellSize/2, row*cellSize + cellSize/2 + 1);
+      }
+    }
+
+    pf.style.width = '100%';
+    const t1 = performance.now();
+
+    setTimeout(() => {
+      pb.style.display = 'none';
+      ph.style.display = 'none';
+      out.style.display = 'block';
+
+      // Update stats
+      const stats = document.getElementById('stats');
+      stats.style.display = 'flex';
+      document.getElementById('statGrid').textContent  = `${cols}×${rows}`;
+      document.getElementById('statEmojis').textContent = `${cols*rows} emojis`;
+      document.getElementById('statTime').textContent  = `${Math.round(t1-t0)}ms`;
+      document.getElementById('statSet').textContent   = setName;
+
+      // Enable buttons
+      document.getElementById('dlBtn').disabled   = false;
+      document.getElementById('copyBtn').disabled = false;
+      document.getElementById('randBtn').disabled = false;
+
+      toast('Emoji art taiyar! 🎉', 'ok');
+      isRendering = false;
+    }, 80);
+  });
+}
+
+// =============================================
+// ACTIONS
+// =============================================
+function downloadArt() {
+  const c = document.getElementById('emojiArtCanvas');
+  const a = document.createElement('a');
+  a.download = 'emoji-art-' + Date.now() + '.png';
+  a.href = c.toDataURL('image/png');
+  a.click();
+  toast('Download ho raha hai…', 'ok');
+}
+
+async function copyArt() {
+  const c = document.getElementById('emojiArtCanvas');
+  c.toBlob(async blob => {
+    try {
+      await navigator.clipboard.write([new ClipboardItem({'image/png': blob})]);
+      toast('Clipboard mein copy ho gaya!', 'ok');
+    } catch(e) {
+      toast('Copy failed — browser permission chahiye', 'err');
+    }
+  }, 'image/png');
+}
+
+function randomizeSet() {
+  const sel = document.getElementById('emojiSet');
+  const keys = Object.keys(EMOJI_SETS);
+  const others = keys.filter(k => k !== sel.value);
+  sel.value = others[Math.floor(Math.random() * others.length)];
+  emojiColorCache = {};
+  renderEmojiArt();
+}
+
+function resetAll() {
+  srcImg = null;
+  emojiColorCache = {};
+  const prev = document.getElementById('preview-img');
+  prev.style.display = 'none'; prev.src = '';
+  const dz = document.getElementById('dropZone');
+  dz.querySelector('.upload-title').textContent = 'Photo Yahan Drop Karo';
+  dz.style.borderColor = '';
+  document.getElementById('renderBtn').disabled = true;
+  document.getElementById('dlBtn').disabled = true;
+  document.getElementById('copyBtn').disabled = true;
+  document.getElementById('randBtn').disabled = true;
+  const out = document.getElementById('emojiArtCanvas');
+  out.style.display = 'none';
+  const ph = document.getElementById('placeholder');
+  ph.style.display = 'flex';
+  ph.querySelector('.ph-emoji').textContent = '🎭';
+  ph.querySelector('.ph-text').textContent = 'Pehle photo upload karo, phir "Emoji Art Banao" click karo';
+  document.getElementById('stats').style.display = 'none';
+  toast('Reset ho gaya', 'info');
+}
+
+// =============================================
+// TOAST
+// =============================================
+let toastTimer;
+function toast(msg, type='info') {
+  const el = document.getElementById('toast');
+  const icons = {ok:'✓', err:'✕', info:'●'};
+  el.querySelector('.ti').textContent = icons[type] || '●';
+  document.getElementById('toastMsg').textContent = msg;
+  el.className = 'show ' + type;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.classList.remove('show'); }, 3000);
+}
+
+// =============================================
+// FILE INPUT + DRAG DROP
+// =============================================
+document.getElementById('fileInput').addEventListener('change', e => {
+  if (e.target.files[0]) handleFile(e.target.files[0]);
+  e.target.value = '';
+});
+
+document.getElementById('dropZone').addEventListener('click', () => {
+  document.getElementById('fileInput').click();
+});
+
+const dz = document.getElementById('dropZone');
+dz.addEventListener('dragover',  e => { e.preventDefault(); dz.classList.add('drag'); });
+dz.addEventListener('dragleave', e => { if (!dz.contains(e.relatedTarget)) dz.classList.remove('drag'); });
+dz.addEventListener('drop', e => {
+  e.preventDefault(); dz.classList.remove('drag');
+  const f = e.dataTransfer.files[0];
+  if (f) handleFile(f);
+});
+
+// Paste support
+document.addEventListener('paste', e => {
+  const item = Array.from(e.clipboardData.items).find(i => i.type.startsWith('image/'));
+  if (item) {
+    const f = item.getAsFile();
+    if (f) handleFile(Object.assign(f, { name: f.name || 'pasted-image.png' }));
+  }
+});
+
+// Ctrl+S shortcut
+document.addEventListener('keydown', e => {
+  if ((e.ctrlKey||e.metaKey) && e.key==='s') {
+    e.preventDefault();
+    if (!document.getElementById('dlBtn').disabled) downloadArt();
+  }
+});
+
+// select changes
+['gridSize','emojiSet'].forEach(id => {
+  document.getElementById(id).addEventListener('change', () => {
+    emojiColorCache = {};
+    scheduleRender();
+  });
+});
+</script>
+</body>
+</html>
