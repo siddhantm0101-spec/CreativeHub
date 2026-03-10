@@ -1,0 +1,1957 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PixelCut Pro — Background Remover & Passport Studio</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+  :root {
+    --bg: #080b14;
+    --surface: #0e1320;
+    --surface2: #141927;
+    --surface3: #1a2035;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.12);
+    --accent: #6c63ff;
+    --accent2: #00d4aa;
+    --accent3: #ff6b6b;
+    --gold: #f5c842;
+    --text: #f0f2ff;
+    --text2: #8892b0;
+    --text3: #4a5568;
+    --glow: rgba(108,99,255,0.3);
+    --glow2: rgba(0,212,170,0.2);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Background mesh */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: 
+      radial-gradient(ellipse 80% 50% at 20% 20%, rgba(108,99,255,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 40% at 80% 80%, rgba(0,212,170,0.06) 0%, transparent 60%),
+      radial-gradient(ellipse 40% 30% at 50% 50%, rgba(245,200,66,0.03) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* HEADER */
+  header {
+    position: relative;
+    z-index: 10;
+    padding: 20px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    backdrop-filter: blur(20px);
+    background: rgba(8,11,20,0.8);
+  }
+
+  .logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 1.4rem;
+    letter-spacing: -0.5px;
+  }
+  .logo span { color: var(--accent); }
+  .logo em { color: var(--accent2); font-style: normal; }
+
+  .badge-premium {
+    background: linear-gradient(135deg, #f5c842, #ff9500);
+    color: #000;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    padding: 3px 8px;
+    border-radius: 20px;
+    margin-left: 10px;
+    vertical-align: middle;
+  }
+
+  .header-pills {
+    display: flex;
+    gap: 8px;
+  }
+
+  .pill {
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    border: 1px solid var(--border2);
+    background: var(--surface);
+    color: var(--text2);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .pill:hover, .pill.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+  }
+
+  /* TABS */
+  .app-container {
+    position: relative;
+    z-index: 1;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 20px 80px;
+  }
+
+  .page-title {
+    text-align: center;
+    margin-bottom: 40px;
+  }
+
+  .page-title h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    font-weight: 800;
+    letter-spacing: -1px;
+    line-height: 1.1;
+    background: linear-gradient(135deg, #fff 0%, rgba(255,255,255,0.7) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 12px;
+  }
+
+  .page-title p {
+    color: var(--text2);
+    font-size: 1rem;
+    font-weight: 300;
+  }
+
+  .tab-bar {
+    display: flex;
+    gap: 4px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 6px;
+    margin-bottom: 40px;
+    width: fit-content;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .tab-btn {
+    padding: 10px 24px;
+    border-radius: 12px;
+    border: none;
+    background: transparent;
+    color: var(--text2);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.25s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .tab-btn.active {
+    background: var(--accent);
+    color: white;
+    box-shadow: 0 4px 20px var(--glow);
+  }
+
+  .tab-btn .tab-icon { font-size: 1.1rem; }
+
+  /* PANELS */
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* UPLOAD ZONE */
+  .upload-zone {
+    border: 2px dashed var(--border2);
+    border-radius: 20px;
+    padding: 60px 40px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    background: var(--surface);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .upload-zone::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at center, rgba(108,99,255,0.05) 0%, transparent 70%);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .upload-zone:hover {
+    border-color: var(--accent);
+    box-shadow: 0 0 40px var(--glow);
+  }
+
+  .upload-zone:hover::before { opacity: 1; }
+
+  .upload-zone.dragover {
+    border-color: var(--accent2);
+    background: rgba(0,212,170,0.05);
+    box-shadow: 0 0 60px var(--glow2);
+  }
+
+  .upload-icon {
+    width: 72px;
+    height: 72px;
+    border-radius: 20px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    margin: 0 auto 20px;
+    box-shadow: 0 10px 40px var(--glow);
+  }
+
+  .upload-zone h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  .upload-zone p {
+    color: var(--text2);
+    font-size: 0.9rem;
+    margin-bottom: 20px;
+  }
+
+  .upload-btn {
+    display: inline-block;
+    padding: 12px 28px;
+    background: linear-gradient(135deg, var(--accent), #8b7ff7);
+    border-radius: 12px;
+    color: white;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 20px var(--glow);
+  }
+
+  .upload-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px var(--glow);
+  }
+
+  /* WORKSPACE */
+  .workspace {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 24px;
+    align-items: start;
+  }
+
+  @media(max-width: 900px) {
+    .workspace { grid-template-columns: 1fr; }
+  }
+
+  .canvas-area {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    overflow: hidden;
+  }
+
+  .canvas-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface2);
+    flex-wrap: wrap;
+  }
+
+  .canvas-toolbar-label {
+    font-size: 0.75rem;
+    color: var(--text3);
+    font-weight: 500;
+    margin-right: 4px;
+  }
+
+  .tool-btn {
+    padding: 6px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border2);
+    background: var(--surface3);
+    color: var(--text2);
+    font-size: 0.78rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .tool-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(108,99,255,0.1);
+  }
+
+  .tool-btn.danger:hover {
+    border-color: var(--accent3);
+    color: var(--accent3);
+    background: rgba(255,107,107,0.1);
+  }
+
+  .canvas-wrapper {
+    position: relative;
+    min-height: 400px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 30px;
+    background: 
+      repeating-conic-gradient(#1a2035 0% 25%, #141927 0% 50%) 
+      0 0 / 20px 20px;
+  }
+
+  .canvas-wrapper canvas {
+    max-width: 100%;
+    max-height: 500px;
+    border-radius: 8px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  }
+
+  .processing-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(8,11,20,0.85);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    border-radius: 0;
+    backdrop-filter: blur(4px);
+    display: none;
+  }
+
+  .processing-overlay.show { display: flex; }
+
+  .spinner {
+    width: 48px;
+    height: 48px;
+    border: 3px solid var(--border2);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .processing-text {
+    font-family: 'Syne', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .processing-sub {
+    font-size: 0.8rem;
+    color: var(--text2);
+  }
+
+  /* SIDEBAR */
+  .sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .sidebar-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+
+  .sidebar-card-header {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface2);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'Syne', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--text2);
+  }
+
+  .sidebar-card-header span { font-size: 1rem; }
+
+  .sidebar-card-body { padding: 16px; }
+
+  /* BG COLORS GRID */
+  .bg-colors {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .bg-color-swatch {
+    aspect-ratio: 1;
+    border-radius: 8px;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: all 0.2s;
+    position: relative;
+  }
+
+  .bg-color-swatch.selected {
+    border-color: var(--accent);
+    box-shadow: 0 0 12px var(--glow);
+    transform: scale(1.1);
+  }
+
+  .bg-color-swatch.transparent-swatch {
+    background: repeating-conic-gradient(#2a3050 0% 25%, #1a2035 0% 50%) 0 0 / 10px 10px;
+  }
+
+  .bg-custom-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .bg-custom-row input[type="color"] {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    border: 1px solid var(--border2);
+    background: var(--surface3);
+    cursor: pointer;
+    padding: 3px;
+  }
+
+  .bg-custom-label {
+    font-size: 0.8rem;
+    color: var(--text2);
+  }
+
+  /* BG TEXTURES */
+  .bg-textures {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+
+  .texture-btn {
+    aspect-ratio: 16/9;
+    border-radius: 8px;
+    border: 2px solid var(--border2);
+    cursor: pointer;
+    overflow: hidden;
+    position: relative;
+    transition: all 0.2s;
+  }
+
+  .texture-btn:hover, .texture-btn.selected {
+    border-color: var(--accent);
+    box-shadow: 0 0 12px var(--glow);
+  }
+
+  .texture-btn img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .texture-btn .texture-label {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 3px 6px;
+    background: rgba(0,0,0,0.6);
+    font-size: 0.65rem;
+    color: white;
+    text-align: center;
+  }
+
+  /* IMAGE UPLOAD BG */
+  .bg-image-upload {
+    border: 1px dashed var(--border2);
+    border-radius: 10px;
+    padding: 16px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.8rem;
+    color: var(--text2);
+  }
+
+  .bg-image-upload:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  /* EXPORT BUTTONS */
+  .export-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .export-btn {
+    padding: 12px 10px;
+    border-radius: 12px;
+    border: none;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .export-btn .btn-icon { font-size: 1.2rem; }
+  .export-btn .btn-label { font-size: 0.72rem; color: inherit; opacity: 0.8; }
+
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), #8b7ff7);
+    color: white;
+    box-shadow: 0 4px 20px var(--glow);
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px var(--glow);
+  }
+
+  .btn-secondary {
+    background: linear-gradient(135deg, var(--accent2), #00a884);
+    color: white;
+    box-shadow: 0 4px 20px var(--glow2);
+  }
+
+  .btn-secondary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px var(--glow2);
+  }
+
+  .btn-outline {
+    background: var(--surface3);
+    border: 1px solid var(--border2);
+    color: var(--text2);
+  }
+
+  .btn-outline:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .btn-gold {
+    background: linear-gradient(135deg, var(--gold), #ff9500);
+    color: #000;
+    grid-column: span 2;
+    flex-direction: row;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .btn-gold:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(245,200,66,0.3);
+  }
+
+  /* PASSPORT PANEL */
+  .passport-grid {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 24px;
+    align-items: start;
+  }
+
+  @media(max-width: 900px) {
+    .passport-grid { grid-template-columns: 1fr; }
+  }
+
+  .passport-preview-area {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    overflow: hidden;
+  }
+
+  .passport-canvas-wrap {
+    min-height: 400px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 30px;
+    background:
+      repeating-conic-gradient(#1a2035 0% 25%, #141927 0% 50%)
+      0 0 / 20px 20px;
+  }
+
+  .passport-canvas-wrap canvas {
+    max-width: 100%;
+    max-height: 500px;
+    border-radius: 4px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  }
+
+  /* SIZE PRESETS */
+  .size-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .size-card {
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid var(--border2);
+    background: var(--surface3);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .size-card:hover, .size-card.selected {
+    border-color: var(--accent);
+    background: rgba(108,99,255,0.1);
+  }
+
+  .size-card-name {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 2px;
+  }
+
+  .size-card-dim {
+    font-size: 0.7rem;
+    color: var(--text2);
+  }
+
+  .size-card-flag {
+    font-size: 1.1rem;
+    margin-bottom: 4px;
+  }
+
+  /* RANGE SLIDER */
+  .range-group {
+    margin-bottom: 14px;
+  }
+
+  .range-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+
+  .range-label span {
+    font-size: 0.8rem;
+    color: var(--text2);
+    font-weight: 500;
+  }
+
+  .range-label .range-val {
+    font-size: 0.8rem;
+    color: var(--accent);
+    font-weight: 600;
+    font-family: 'Syne', sans-serif;
+  }
+
+  input[type="range"] {
+    width: 100%;
+    height: 4px;
+    border-radius: 4px;
+    background: var(--surface3);
+    outline: none;
+    -webkit-appearance: none;
+    cursor: pointer;
+  }
+
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 8px var(--glow);
+    cursor: pointer;
+    transition: transform 0.2s;
+  }
+
+  input[type="range"]::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+  }
+
+  /* TOGGLE */
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .toggle-row:last-child { border-bottom: none; }
+
+  .toggle-label {
+    font-size: 0.82rem;
+    color: var(--text2);
+    font-weight: 500;
+  }
+
+  .toggle {
+    position: relative;
+    width: 36px;
+    height: 20px;
+  }
+
+  .toggle input { display: none; }
+
+  .toggle-slider {
+    position: absolute;
+    inset: 0;
+    background: var(--surface3);
+    border-radius: 20px;
+    cursor: pointer;
+    border: 1px solid var(--border2);
+    transition: all 0.3s;
+  }
+
+  .toggle-slider::before {
+    content: '';
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    left: 2px;
+    top: 2px;
+    background: var(--text2);
+    border-radius: 50%;
+    transition: all 0.3s;
+  }
+
+  .toggle input:checked + .toggle-slider {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+
+  .toggle input:checked + .toggle-slider::before {
+    transform: translateX(16px);
+    background: white;
+  }
+
+  /* PASSPORT SHEET PREVIEW */
+  .sheet-preview {
+    background: white;
+    border-radius: 8px;
+    padding: 10px;
+    display: grid;
+    gap: 4px;
+    width: 100%;
+    max-width: 320px;
+    margin: 0 auto;
+  }
+
+  /* FEATURES BAR */
+  .features-bar {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-bottom: 32px;
+    justify-content: center;
+  }
+
+  .feature-chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    font-size: 0.78rem;
+    color: var(--text2);
+    font-weight: 500;
+  }
+
+  .feature-chip .chip-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent2);
+  }
+
+  /* SELECT */
+  select {
+    width: 100%;
+    padding: 10px 14px;
+    background: var(--surface3);
+    border: 1px solid var(--border2);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem;
+    cursor: pointer;
+    outline: none;
+    margin-bottom: 12px;
+  }
+
+  select:focus { border-color: var(--accent); }
+
+  /* NOTIFICATION */
+  .notif {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    padding: 14px 20px;
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: 14px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 100;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+    transform: translateY(100px);
+    opacity: 0;
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .notif.show {
+    transform: translateY(0);
+    opacity: 1;
+  }
+
+  .notif.success { border-color: var(--accent2); color: var(--accent2); }
+  .notif.error { border-color: var(--accent3); color: var(--accent3); }
+
+  /* SECTION LABEL */
+  .section-label {
+    font-size: 0.7rem;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 600;
+    margin-bottom: 10px;
+    margin-top: 16px;
+  }
+
+  .section-label:first-child { margin-top: 0; }
+
+  /* hidden inputs */
+  #fileInput, #passportFileInput, #bgImageInput { display: none; }
+
+  /* Divider */
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 12px 0;
+  }
+
+  .status-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 600;
+  }
+
+  .status-chip.ready {
+    background: rgba(0,212,170,0.15);
+    color: var(--accent2);
+  }
+
+  .status-chip.waiting {
+    background: rgba(138,138,138,0.1);
+    color: var(--text3);
+  }
+
+  .step-badge {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: white;
+    font-size: 0.7rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 6px;
+  }
+
+  /* passport print sheet */
+  #printSheetContainer {
+    display: none;
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    margin-top: 16px;
+  }
+
+  .print-grid {
+    display: grid;
+    gap: 6px;
+    margin: 0 auto;
+  }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--surface3); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    Pixel<span>Cut</span><em>Pro</em>
+    <span class="badge-premium">PREMIUM</span>
+  </div>
+  <div class="header-pills">
+    <div class="pill active">🖼️ BG Remover</div>
+    <div class="pill">🪪 Passport</div>
+    <div class="pill">✨ AI Studio</div>
+  </div>
+</header>
+
+<div class="app-container">
+
+  <div class="page-title">
+    <h1>Remove Background &<br>Create Passport Photos</h1>
+    <p>100% browser-based · No upload to server · Instant results · Free forever</p>
+  </div>
+
+  <div class="features-bar">
+    <div class="feature-chip"><div class="chip-dot"></div> AI-Powered Removal</div>
+    <div class="feature-chip"><div class="chip-dot"></div> Custom Backgrounds</div>
+    <div class="feature-chip"><div class="chip-dot"></div> Passport Size Presets</div>
+    <div class="feature-chip"><div class="chip-dot"></div> Print-Ready Export</div>
+    <div class="feature-chip"><div class="chip-dot"></div> HD Quality</div>
+    <div class="feature-chip"><div class="chip-dot"></div> Zero Server Upload</div>
+  </div>
+
+  <div class="tab-bar">
+    <button class="tab-btn active" id="tab-bg" onclick="switchTab('bg', this)">
+      <span class="tab-icon">🪄</span> Background Remover
+    </button>
+    <button class="tab-btn" id="tab-passport" onclick="switchTab('passport', this)">
+      <span class="tab-icon">🪪</span> Passport Photo Studio
+    </button>
+  </div>
+
+  <!-- BG REMOVER PANEL -->
+  <div class="panel active" id="panel-bg">
+
+    <div id="bgUploadZone">
+      <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()"
+        ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
+        <div class="upload-icon">🪄</div>
+        <h3>Drop Your Image Here</h3>
+        <p>PNG, JPG, WEBP supported · Up to 20MB</p>
+        <div class="upload-btn">Choose Image</div>
+      </div>
+    </div>
+
+    <input type="file" id="fileInput" accept="image/*" onchange="loadImage(event, 'bg')">
+    <input type="file" id="bgImageInput" accept="image/*" onchange="loadBgImage(event)">
+
+    <div id="bgWorkspace" style="display:none">
+      <div class="workspace">
+        <div class="canvas-area">
+          <div class="canvas-toolbar">
+            <span class="canvas-toolbar-label">Canvas:</span>
+            <button class="tool-btn" onclick="zoomIn()">🔍 Zoom In</button>
+            <button class="tool-btn" onclick="zoomOut()">🔎 Zoom Out</button>
+            <button class="tool-btn" onclick="resetZoom()">↩ Reset</button>
+            <div style="flex:1"></div>
+            <div id="imageDimensions" style="font-size:0.75rem;color:var(--text3)"></div>
+            <button class="tool-btn danger" onclick="resetAll()">🗑️ Remove</button>
+          </div>
+          <div class="canvas-wrapper" id="canvasWrapper">
+            <canvas id="mainCanvas"></canvas>
+            <canvas id="outputCanvas" style="display:none"></canvas>
+            <div class="processing-overlay" id="processingOverlay">
+              <div class="spinner"></div>
+              <div class="processing-text">Removing Background...</div>
+              <div class="processing-sub">AI model running in your browser</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="sidebar">
+          <!-- STATUS -->
+          <div class="sidebar-card">
+            <div class="sidebar-card-header"><span>⚡</span> Status</div>
+            <div class="sidebar-card-body">
+              <div style="display:flex;justify-content:space-between;align-items:center">
+                <span style="font-size:0.85rem;font-weight:600">Background Removal</span>
+                <span class="status-chip waiting" id="removalStatus">Pending</span>
+              </div>
+              <hr class="divider">
+              <button class="export-btn btn-primary" style="width:100%;flex-direction:row;justify-content:center;gap:8px;padding:14px;"
+                onclick="removeBackground()">
+                <span>🪄</span> Remove Background
+              </button>
+            </div>
+          </div>
+
+          <!-- BACKGROUND COLOR -->
+          <div class="sidebar-card">
+            <div class="sidebar-card-header"><span>🎨</span> Background Color</div>
+            <div class="sidebar-card-body">
+              <div class="section-label">Solid Colors</div>
+              <div class="bg-colors" id="bgColorsGrid"></div>
+              <div class="bg-custom-row">
+                <input type="color" id="customBgColor" value="#4A90E2" onchange="applyBgColor(this.value)">
+                <span class="bg-custom-label">Custom color</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- BACKGROUND IMAGE -->
+          <div class="sidebar-card">
+            <div class="sidebar-card-header"><span>🖼️</span> Background Image</div>
+            <div class="sidebar-card-body">
+              <div class="section-label">Gradients</div>
+              <div class="bg-textures" id="gradientGrid"></div>
+              <hr class="divider">
+              <div class="section-label">Upload Custom BG</div>
+              <div class="bg-image-upload" onclick="document.getElementById('bgImageInput').click()">
+                📁 Click to upload background image
+              </div>
+            </div>
+          </div>
+
+          <!-- ADJUSTMENTS -->
+          <div class="sidebar-card">
+            <div class="sidebar-card-header"><span>🎛️</span> Adjustments</div>
+            <div class="sidebar-card-body">
+              <div class="range-group">
+                <div class="range-label">
+                  <span>Edge Smoothness</span>
+                  <span class="range-val" id="edgeVal">5</span>
+                </div>
+                <input type="range" min="0" max="10" value="5" id="edgeRange"
+                  oninput="document.getElementById('edgeVal').textContent=this.value">
+              </div>
+              <div class="range-group">
+                <div class="range-label">
+                  <span>BG Opacity</span>
+                  <span class="range-val" id="bgOpacityVal">100%</span>
+                </div>
+                <input type="range" min="0" max="100" value="100" id="bgOpacityRange"
+                  oninput="document.getElementById('bgOpacityVal').textContent=this.value+'%';applyBgOpacity(this.value)">
+              </div>
+              <div class="range-group">
+                <div class="range-label">
+                  <span>Subject Brightness</span>
+                  <span class="range-val" id="brightnessVal">100%</span>
+                </div>
+                <input type="range" min="50" max="150" value="100" id="brightnessRange"
+                  oninput="document.getElementById('brightnessVal').textContent=this.value+'%'">
+              </div>
+            </div>
+          </div>
+
+          <!-- EXPORT -->
+          <div class="sidebar-card">
+            <div class="sidebar-card-header"><span>⬇️</span> Export</div>
+            <div class="sidebar-card-body">
+              <div class="section-label">Format</div>
+              <select id="exportFormat">
+                <option value="png">PNG (Transparent support)</option>
+                <option value="jpeg">JPEG (Smaller file)</option>
+                <option value="webp">WebP (Best quality)</option>
+              </select>
+              <div class="export-grid">
+                <button class="export-btn btn-primary" onclick="exportImage('no-bg')">
+                  <span class="btn-icon">🪄</span>
+                  <span>No BG</span>
+                  <span class="btn-label">Transparent PNG</span>
+                </button>
+                <button class="export-btn btn-secondary" onclick="exportImage('with-bg')">
+                  <span class="btn-icon">🎨</span>
+                  <span>With BG</span>
+                  <span class="btn-label">Current BG</span>
+                </button>
+                <button class="export-btn btn-outline" onclick="exportImage('original')">
+                  <span class="btn-icon">📸</span>
+                  <span>Original</span>
+                  <span class="btn-label">No changes</span>
+                </button>
+                <button class="export-btn btn-outline" onclick="exportImage('both')">
+                  <span class="btn-icon">📦</span>
+                  <span>All Files</span>
+                  <span class="btn-label">ZIP download</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PASSPORT PANEL -->
+  <div class="panel" id="panel-passport">
+
+    <div id="passportUploadZone">
+      <div class="upload-zone" onclick="document.getElementById('passportFileInput').click()"
+        ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handlePassportDrop(event)">
+        <div class="upload-icon">🪪</div>
+        <h3>Upload Your Photo</h3>
+        <p>Clear face photo recommended · PNG, JPG supported</p>
+        <div class="upload-btn">Select Photo</div>
+      </div>
+    </div>
+
+    <input type="file" id="passportFileInput" accept="image/*" onchange="loadImage(event, 'passport')">
+
+    <div id="passportWorkspace" style="display:none">
+      <div class="passport-grid">
+        <div class="passport-preview-area">
+          <div class="canvas-toolbar">
+            <span class="canvas-toolbar-label">Preview:</span>
+            <div id="passportSizeLabel" style="font-size:0.8rem;font-weight:600;color:var(--accent2)">India — 35×45mm</div>
+            <div style="flex:1"></div>
+            <button class="tool-btn" onclick="cropFace()">✂️ Auto Crop</button>
+            <button class="tool-btn danger" onclick="resetPassport()">🗑️ Remove</button>
+          </div>
+          <div class="passport-canvas-wrap" id="passportCanvasWrap">
+            <canvas id="passportCanvas"></canvas>
+            <div class="processing-overlay" id="passportProcessingOverlay">
+              <div class="spinner"></div>
+              <div class="processing-text" id="passportProcessText">Processing...</div>
+              <div class="processing-sub">Please wait</div>
+            </div>
+          </div>
+
+          <!-- Print Sheet -->
+          <div style="padding:20px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+              <span style="font-size:0.85rem;font-weight:600;font-family:'Syne',sans-serif">Print Sheet Preview</span>
+              <span style="font-size:0.75rem;color:var(--text2)" id="sheetInfo">6 photos on A4</span>
+            </div>
+            <div id="printSheetContainer">
+              <div class="print-grid" id="printGrid"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="sidebar">
+          <!-- SIZE PRESETS -->
+          <div class="sidebar-card">
+            <div class="sidebar-card-header"><span>📐</span> Passport Size</div>
+            <div class="sidebar-card-body">
+              <div class="size-grid" id="sizeGrid"></div>
+            </div>
+          </div>
+
+          <!-- BG COLOR -->
+          <div class="sidebar-card">
+            <div class="sidebar-card-header"><span>🎨</span> Background</div>
+            <div class="sidebar-card-body">
+              <div class="section-label">Quick Select</div>
+              <div class="bg-colors" id="passportBgColors"></div>
+              <div class="bg-custom-row">
+                <input type="color" id="passportBgColor" value="#FFFFFF" onchange="applyPassportBg(this.value)">
+                <span class="bg-custom-label">Custom color</span>
+              </div>
+              <hr class="divider">
+              <div class="toggle-row">
+                <span class="toggle-label">Auto Remove Background</span>
+                <label class="toggle">
+                  <input type="checkbox" id="autoRemoveBg" checked>
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- PHOTO OPTIONS -->
+          <div class="sidebar-card">
+            <div class="sidebar-card-header"><span>🎛️</span> Photo Options</div>
+            <div class="sidebar-card-body">
+              <div class="range-group">
+                <div class="range-label">
+                  <span>Brightness</span>
+                  <span class="range-val" id="pBrightnessVal">100%</span>
+                </div>
+                <input type="range" min="60" max="140" value="100" id="pBrightnessRange"
+                  oninput="document.getElementById('pBrightnessVal').textContent=this.value+'%';updatePassportCanvas()">
+              </div>
+              <div class="range-group">
+                <div class="range-label">
+                  <span>Contrast</span>
+                  <span class="range-val" id="pContrastVal">100%</span>
+                </div>
+                <input type="range" min="60" max="140" value="100" id="pContrastRange"
+                  oninput="document.getElementById('pContrastVal').textContent=this.value+'%';updatePassportCanvas()">
+              </div>
+              <div class="range-group">
+                <div class="range-label">
+                  <span>Zoom / Scale</span>
+                  <span class="range-val" id="pZoomVal">100%</span>
+                </div>
+                <input type="range" min="50" max="150" value="100" id="pZoomRange"
+                  oninput="document.getElementById('pZoomVal').textContent=this.value+'%';updatePassportCanvas()">
+              </div>
+              <div class="toggle-row">
+                <span class="toggle-label">Add White Border</span>
+                <label class="toggle">
+                  <input type="checkbox" id="addBorder" onchange="updatePassportCanvas()">
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+              <div class="toggle-row">
+                <span class="toggle-label">Print Crop Lines</span>
+                <label class="toggle">
+                  <input type="checkbox" id="cropLines" checked onchange="generatePrintSheet()">
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- PRINT OPTIONS -->
+          <div class="sidebar-card">
+            <div class="sidebar-card-header"><span>🖨️</span> Print Sheet</div>
+            <div class="sidebar-card-body">
+              <div class="section-label">Paper Size</div>
+              <select id="paperSize" onchange="generatePrintSheet()">
+                <option value="a4">A4 (210 × 297mm)</option>
+                <option value="4r">4R (4 × 6 inch)</option>
+                <option value="letter">US Letter</option>
+              </select>
+              <div class="section-label">Photos per Sheet</div>
+              <select id="photosPerSheet" onchange="generatePrintSheet()">
+                <option value="4">4 photos</option>
+                <option value="6" selected>6 photos</option>
+                <option value="8">8 photos</option>
+                <option value="12">12 photos</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- EXPORT -->
+          <div class="sidebar-card">
+            <div class="sidebar-card-header"><span>⬇️</span> Export</div>
+            <div class="sidebar-card-body">
+              <div class="export-grid">
+                <button class="export-btn btn-primary" onclick="exportPassport('single')">
+                  <span class="btn-icon">🪪</span>
+                  <span>Single</span>
+                  <span class="btn-label">PNG Photo</span>
+                </button>
+                <button class="export-btn btn-secondary" onclick="exportPassport('sheet')">
+                  <span class="btn-icon">🖨️</span>
+                  <span>Sheet</span>
+                  <span class="btn-label">Print Ready</span>
+                </button>
+                <button class="export-btn btn-gold" onclick="exportPassport('all')">
+                  <span>📦</span> Export All Sizes (ZIP)
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- NOTIFICATION -->
+<div class="notif" id="notif">
+  <span id="notifIcon">✅</span>
+  <span id="notifMsg">Done!</span>
+</div>
+
+<script>
+// ============================================================
+// STATE
+// ============================================================
+let originalImage = null;
+let bgRemovedImageData = null;
+let currentBgColor = '#FFFFFF';
+let currentBgImage = null;
+let currentBgGradient = null;
+let zoomLevel = 1;
+
+let passportOrigImage = null;
+let passportBgColor = '#FFFFFF';
+let selectedSize = { name: 'India', w: 35, h: 45, dpi: 600, flag: '🇮🇳' };
+
+const BG_COLORS = [
+  { color: 'transparent', label: 'None' },
+  { color: '#FFFFFF', label: 'White' },
+  { color: '#F0F4FF', label: 'Soft White' },
+  { color: '#4A90E2', label: 'Blue' },
+  { color: '#2ECC71', label: 'Green' },
+  { color: '#E74C3C', label: 'Red' },
+  { color: '#F39C12', label: 'Orange' },
+  { color: '#9B59B6', label: 'Purple' },
+  { color: '#1ABC9C', label: 'Teal' },
+  { color: '#2C3E50', label: 'Dark' },
+  { color: '#000000', label: 'Black' },
+  { color: '#FFF3CD', label: 'Cream' },
+];
+
+const PASSPORT_BG_COLORS = [
+  '#FFFFFF', '#F0F4FF', '#4A90E2', '#87CEEB', '#E8F4FD',
+  '#F5F5F5', '#FFFDE7', '#F3E5F5', '#E8F5E9', '#FFF3E0',
+  '#E3F2FD', '#000000',
+];
+
+const GRADIENTS = [
+  { name: 'Ocean', css: 'linear-gradient(135deg,#667eea,#764ba2)' },
+  { name: 'Sunset', css: 'linear-gradient(135deg,#f093fb,#f5576c)' },
+  { name: 'Forest', css: 'linear-gradient(135deg,#4facfe,#00f2fe)' },
+  { name: 'Fire', css: 'linear-gradient(135deg,#f7971e,#ffd200)' },
+  { name: 'Night', css: 'linear-gradient(135deg,#0f0c29,#302b63)' },
+  { name: 'Rose', css: 'linear-gradient(135deg,#ee0979,#ff6a00)' },
+];
+
+const PASSPORT_SIZES = [
+  { name: 'India', w: 35, h: 45, dpi: 600, flag: '🇮🇳' },
+  { name: 'USA', w: 50, h: 50, dpi: 600, flag: '🇺🇸' },
+  { name: 'UK', w: 35, h: 45, dpi: 600, flag: '🇬🇧' },
+  { name: 'EU/Schengen', w: 35, h: 45, dpi: 600, flag: '🇪🇺' },
+  { name: 'Australia', w: 35, h: 45, dpi: 600, flag: '🇦🇺' },
+  { name: 'Canada', w: 50, h: 70, dpi: 600, flag: '🇨🇦' },
+  { name: 'China', w: 33, h: 48, dpi: 600, flag: '🇨🇳' },
+  { name: 'UAE', w: 40, h: 60, dpi: 600, flag: '🇦🇪' },
+];
+
+// ============================================================
+// INIT
+// ============================================================
+document.addEventListener('DOMContentLoaded', () => {
+  initBgColors();
+  initGradients();
+  initPassportSizes();
+  initPassportBgColors();
+});
+
+function initBgColors() {
+  const grid = document.getElementById('bgColorsGrid');
+  BG_COLORS.forEach((item, i) => {
+    const div = document.createElement('div');
+    div.className = 'bg-color-swatch' + (item.color === 'transparent' ? ' transparent-swatch' : '');
+    if (item.color !== 'transparent') div.style.background = item.color;
+    if (i === 1) div.classList.add('selected');
+    div.title = item.label;
+    div.onclick = () => {
+      document.querySelectorAll('#bgColorsGrid .bg-color-swatch').forEach(s => s.classList.remove('selected'));
+      div.classList.add('selected');
+      if (item.color === 'transparent') {
+        currentBgColor = null;
+        currentBgImage = null;
+        currentBgGradient = null;
+      } else {
+        currentBgColor = item.color;
+        currentBgImage = null;
+        currentBgGradient = null;
+      }
+      renderOutput();
+    };
+    grid.appendChild(div);
+  });
+}
+
+function initGradients() {
+  const grid = document.getElementById('gradientGrid');
+  GRADIENTS.forEach(g => {
+    const div = document.createElement('div');
+    div.className = 'texture-btn';
+    div.innerHTML = `<div style="width:100%;height:100%;background:${g.css}"></div><div class="texture-label">${g.name}</div>`;
+    div.onclick = () => {
+      document.querySelectorAll('#gradientGrid .texture-btn').forEach(s => s.classList.remove('selected'));
+      div.classList.add('selected');
+      currentBgGradient = g.css;
+      currentBgColor = null;
+      currentBgImage = null;
+      renderOutput();
+    };
+    grid.appendChild(div);
+  });
+}
+
+function initPassportSizes() {
+  const grid = document.getElementById('sizeGrid');
+  PASSPORT_SIZES.forEach((s, i) => {
+    const div = document.createElement('div');
+    div.className = 'size-card' + (i === 0 ? ' selected' : '');
+    div.innerHTML = `<div class="size-card-flag">${s.flag}</div>
+      <div class="size-card-name">${s.name}</div>
+      <div class="size-card-dim">${s.w}×${s.h}mm</div>`;
+    div.onclick = () => {
+      document.querySelectorAll('.size-card').forEach(c => c.classList.remove('selected'));
+      div.classList.add('selected');
+      selectedSize = s;
+      document.getElementById('passportSizeLabel').textContent = `${s.flag} ${s.name} — ${s.w}×${s.h}mm`;
+      updatePassportCanvas();
+    };
+    grid.appendChild(div);
+  });
+}
+
+function initPassportBgColors() {
+  const grid = document.getElementById('passportBgColors');
+  PASSPORT_BG_COLORS.forEach((color, i) => {
+    const div = document.createElement('div');
+    div.className = 'bg-color-swatch' + (i === 0 ? ' selected' : '');
+    div.style.background = color;
+    div.title = color;
+    div.onclick = () => {
+      document.querySelectorAll('#passportBgColors .bg-color-swatch').forEach(s => s.classList.remove('selected'));
+      div.classList.add('selected');
+      applyPassportBg(color);
+    };
+    grid.appendChild(div);
+  });
+}
+
+// ============================================================
+// TAB SWITCH
+// ============================================================
+function switchTab(tab, el) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('panel-' + tab).classList.add('active');
+  if (el) el.classList.add('active');
+}
+
+// ============================================================
+// DRAG & DROP
+// ============================================================
+function handlePassportDrop(e) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (file && file.type.startsWith('image/')) {
+    const fakeEvent = { target: { files: [file] } };
+    loadImage(fakeEvent, 'passport');
+  }
+}
+
+function handleDragOver(e) {
+  e.preventDefault();
+  e.currentTarget.classList.add('dragover');
+}
+
+function handleDragLeave(e) {
+  e.currentTarget.classList.remove('dragover');
+}
+
+function handleDrop(e, type = 'bg') {
+  e.preventDefault();
+  e.currentTarget.classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (file && file.type.startsWith('image/')) {
+    const fakeEvent = { target: { files: [file] } };
+    loadImage(fakeEvent, type);
+  }
+}
+
+// ============================================================
+// LOAD IMAGE
+// ============================================================
+function loadImage(event, type) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const img = new Image();
+    img.onload = () => {
+      if (type === 'bg') {
+        originalImage = img;
+        bgRemovedImageData = null;
+        document.getElementById('bgUploadZone').style.display = 'none';
+        document.getElementById('bgWorkspace').style.display = 'block';
+        document.getElementById('imageDimensions').textContent = `${img.width}×${img.height}px`;
+        renderOriginal();
+        document.getElementById('removalStatus').className = 'status-chip waiting';
+        document.getElementById('removalStatus').textContent = 'Ready';
+      } else {
+        passportOrigImage = img;
+        document.getElementById('passportUploadZone').style.display = 'none';
+        document.getElementById('passportWorkspace').style.display = 'block';
+        updatePassportCanvas();
+        generatePrintSheet();
+      }
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function loadBgImage(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const img = new Image();
+    img.onload = () => {
+      currentBgImage = img;
+      currentBgColor = null;
+      currentBgGradient = null;
+      renderOutput();
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+// ============================================================
+// RENDER ORIGINAL
+// ============================================================
+function renderOriginal() {
+  const canvas = document.getElementById('mainCanvas');
+  const ctx = canvas.getContext('2d');
+  const maxW = 700, maxH = 500;
+  let w = originalImage.width, h = originalImage.height;
+  if (w > maxW) { h = h * maxW / w; w = maxW; }
+  if (h > maxH) { w = w * maxH / h; h = maxH; }
+  canvas.width = w; canvas.height = h;
+  ctx.drawImage(originalImage, 0, 0, w, h);
+}
+
+// ============================================================
+// REMOVE BACKGROUND (client-side using alpha threshold)
+// ============================================================
+async function removeBackground() {
+  if (!originalImage) return;
+  showProcessing('processingOverlay', true);
+  await sleep(100);
+
+  try {
+    // Use canvas-based background removal with edge detection
+    const offCanvas = document.createElement('canvas');
+    offCanvas.width = originalImage.width;
+    offCanvas.height = originalImage.height;
+    const offCtx = offCanvas.getContext('2d');
+    offCtx.drawImage(originalImage, 0, 0);
+
+    const imageData = offCtx.getImageData(0, 0, offCanvas.width, offCanvas.height);
+    const data = imageData.data;
+    const w = offCanvas.width, h = offCanvas.height;
+
+    // Smart background removal: sample corners for BG color
+    const corners = [
+      getPixel(data, w, 0, 0),
+      getPixel(data, w, w-1, 0),
+      getPixel(data, w, 0, h-1),
+      getPixel(data, w, w-1, h-1),
+      getPixel(data, w, Math.floor(w/2), 0),
+      getPixel(data, w, 0, Math.floor(h/2)),
+    ];
+
+    const avgBg = {
+      r: corners.reduce((s,c)=>s+c.r,0)/corners.length,
+      g: corners.reduce((s,c)=>s+c.g,0)/corners.length,
+      b: corners.reduce((s,c)=>s+c.b,0)/corners.length,
+    };
+
+    const tolerance = 40 + parseInt(document.getElementById('edgeRange').value) * 5;
+
+    // Flood-fill based removal from edges
+    const visited = new Uint8Array(w * h);
+    const toRemove = new Uint8Array(w * h);
+    const queue = [];
+
+    // Seed from all edges
+    for (let x = 0; x < w; x++) { queue.push([x,0]); queue.push([x,h-1]); }
+    for (let y = 0; y < h; y++) { queue.push([0,y]); queue.push([w-1,y]); }
+
+    while (queue.length > 0) {
+      const [cx, cy] = queue.pop();
+      const idx = cy * w + cx;
+      if (visited[idx]) continue;
+      visited[idx] = 1;
+      const px = getPixel(data, w, cx, cy);
+      const diff = colorDist(px, avgBg);
+      if (diff < tolerance) {
+        toRemove[idx] = 1;
+        if (cx > 0) queue.push([cx-1, cy]);
+        if (cx < w-1) queue.push([cx+1, cy]);
+        if (cy > 0) queue.push([cx, cy-1]);
+        if (cy < h-1) queue.push([cx, cy+1]);
+      }
+    }
+
+    // Apply removal with feathering
+    const smoothness = parseInt(document.getElementById('edgeRange').value);
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        const idx = (y * w + x) * 4;
+        const pIdx = y * w + x;
+        if (toRemove[pIdx]) {
+          data[idx+3] = 0;
+        } else if (smoothness > 0) {
+          // Check if near a removed pixel for feathering
+          let nearRemoved = 0;
+          const r = Math.min(smoothness, 3);
+          for (let dy = -r; dy <= r && !nearRemoved; dy++) {
+            for (let dx = -r; dx <= r && !nearRemoved; dx++) {
+              const nx = x+dx, ny = y+dy;
+              if (nx>=0 && nx<w && ny>=0 && ny<h) {
+                if (toRemove[ny*w+nx]) nearRemoved++;
+              }
+            }
+          }
+          if (nearRemoved > 0) {
+            data[idx+3] = Math.max(0, 255 - nearRemoved * 40);
+          }
+        }
+      }
+    }
+
+    offCtx.putImageData(imageData, 0, 0);
+    bgRemovedImageData = offCanvas;
+
+    document.getElementById('removalStatus').className = 'status-chip ready';
+    document.getElementById('removalStatus').textContent = '✓ Done';
+    renderOutput();
+    showNotif('✅', 'Background removed successfully!', 'success');
+  } catch(err) {
+    showNotif('❌', 'Error: ' + err.message, 'error');
+  }
+
+  showProcessing('processingOverlay', false);
+}
+
+function getPixel(data, w, x, y) {
+  const i = (y * w + x) * 4;
+  return { r: data[i], g: data[i+1], b: data[i+2], a: data[i+3] };
+}
+
+function colorDist(a, b) {
+  return Math.sqrt((a.r-b.r)**2 + (a.g-b.g)**2 + (a.b-b.b)**2);
+}
+
+// ============================================================
+// RENDER OUTPUT
+// ============================================================
+function renderOutput() {
+  const source = bgRemovedImageData || originalImage;
+  if (!source) return;
+  const canvas = document.getElementById('mainCanvas');
+  const ctx = canvas.getContext('2d');
+  const maxW = 700, maxH = 500;
+  let w = source.width || source.naturalWidth, h = source.height || source.naturalHeight;
+  if (w > maxW) { h = h * maxW / w; w = maxW; }
+  if (h > maxH) { w = w * maxH / h; h = maxH; }
+  canvas.width = w; canvas.height = h;
+
+  // Draw background
+  if (currentBgGradient) {
+    const grad = parseGradientToCanvas(ctx, currentBgGradient, w, h);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, w, h);
+  } else if (currentBgImage) {
+    ctx.drawImage(currentBgImage, 0, 0, w, h);
+  } else if (currentBgColor && currentBgColor !== 'transparent') {
+    ctx.fillStyle = currentBgColor;
+    ctx.fillRect(0, 0, w, h);
+  }
+
+  // Draw subject
+  const brightness = parseInt(document.getElementById('brightnessRange').value);
+  ctx.filter = `brightness(${brightness}%)`;
+  ctx.drawImage(source, 0, 0, w, h);
+  ctx.filter = 'none';
+}
+
+function parseGradientToCanvas(ctx, cssGradient, w, h) {
+  // Simple linear gradient parser
+  const matches = cssGradient.match(/#[0-9a-fA-F]{6}/g) || ['#667eea','#764ba2'];
+  const grad = ctx.createLinearGradient(0, 0, w, h);
+  matches.forEach((c, i) => grad.addColorStop(i / (matches.length-1), c));
+  return grad;
+}
+
+// ============================================================
+// PASSPORT CANVAS
+// ============================================================
+function updatePassportCanvas() {
+  if (!passportOrigImage) return;
+  const canvas = document.getElementById('passportCanvas');
+  const ctx = canvas.getContext('2d');
+
+  // Convert mm to px at 96dpi for preview
+  const scale = 4;
+  const w = selectedSize.w * scale;
+  const h = selectedSize.h * scale;
+  canvas.width = w;
+  canvas.height = h;
+
+  // BG
+  ctx.fillStyle = passportBgColor;
+  ctx.fillRect(0, 0, w, h);
+
+  // Draw image centered/scaled
+  const zoom = parseInt(document.getElementById('pZoomRange').value) / 100;
+  const brightness = parseInt(document.getElementById('pBrightnessRange').value);
+  const contrast = parseInt(document.getElementById('pContrastRange').value);
+  ctx.filter = `brightness(${brightness}%) contrast(${contrast}%)`;
+
+  const imgAspect = passportOrigImage.width / passportOrigImage.height;
+  const canvasAspect = w / h;
+  let dw, dh, dx, dy;
+
+  if (imgAspect > canvasAspect) {
+    dh = h * zoom; dw = dh * imgAspect;
+  } else {
+    dw = w * zoom; dh = dw / imgAspect;
+  }
+  dx = (w - dw) / 2; dy = (h - dh) / 2;
+  ctx.drawImage(passportOrigImage, dx, dy, dw, dh);
+  ctx.filter = 'none';
+
+  // Border
+  if (document.getElementById('addBorder').checked) {
+    ctx.strokeStyle = '#cccccc';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(1, 1, w-2, h-2);
+  }
+
+  generatePrintSheet();
+}
+
+function applyPassportBg(color) {
+  passportBgColor = color;
+  document.getElementById('passportBgColor').value = color;
+  updatePassportCanvas();
+}
+
+function applyBgColor(color) {
+  currentBgColor = color;
+  currentBgImage = null;
+  currentBgGradient = null;
+  renderOutput();
+}
+
+function applyBgOpacity(val) {
+  renderOutput();
+}
+
+// ============================================================
+// GENERATE PRINT SHEET
+// ============================================================
+function generatePrintSheet() {
+  const passCanvas = document.getElementById('passportCanvas');
+  if (!passportOrigImage || !passCanvas.width) return;
+
+  const count = parseInt(document.getElementById('photosPerSheet').value);
+  const showCropLines = document.getElementById('cropLines').checked;
+  const container = document.getElementById('printSheetContainer');
+  const grid = document.getElementById('printGrid');
+  
+  // Show container
+  container.style.display = 'block';
+  grid.innerHTML = '';
+
+  const cols = count <= 4 ? 2 : count <= 6 ? 3 : 4;
+  const rows = Math.ceil(count / cols);
+  grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+  grid.style.background = 'white';
+  grid.style.padding = '10px';
+  grid.style.gap = showCropLines ? '6px' : '4px';
+
+  document.getElementById('sheetInfo').textContent = `${count} photos on ${document.getElementById('paperSize').value.toUpperCase()}`;
+
+  for (let i = 0; i < count; i++) {
+    const cell = document.createElement('div');
+    cell.style.cssText = `
+      background: white;
+      ${showCropLines ? 'border: 1px dashed #ccc;' : ''}
+      overflow: hidden;
+      border-radius: 2px;
+    `;
+    const img = document.createElement('img');
+    img.src = passCanvas.toDataURL();
+    img.style.cssText = 'width:100%;display:block;';
+    cell.appendChild(img);
+    grid.appendChild(cell);
+  }
+}
+
+// ============================================================
+// EXPORT
+// ============================================================
+function exportImage(type) {
+  const format = document.getElementById('exportFormat').value;
+  const ext = format === 'jpeg' ? 'jpg' : format;
+  const mimeType = `image/${format}`;
+
+  if (type === 'no-bg') {
+    if (!bgRemovedImageData) { showNotif('⚠️', 'Remove background first!', 'error'); return; }
+    downloadCanvas(bgRemovedImageData, 'removed-bg.' + ext, mimeType);
+  } else if (type === 'with-bg') {
+    downloadCanvas(document.getElementById('mainCanvas'), 'with-background.' + ext, mimeType);
+  } else if (type === 'original') {
+    const c = document.createElement('canvas');
+    c.width = originalImage.width; c.height = originalImage.height;
+    c.getContext('2d').drawImage(originalImage, 0, 0);
+    downloadCanvas(c, 'original.' + ext, mimeType);
+  } else if (type === 'both') {
+    if (bgRemovedImageData) downloadCanvas(bgRemovedImageData, 'removed-bg.png', 'image/png');
+    downloadCanvas(document.getElementById('mainCanvas'), 'with-background.png', 'image/png');
+    showNotif('📦', 'Both files downloaded!', 'success');
+    return;
+  }
+  showNotif('✅', 'Image exported!', 'success');
+}
+
+function exportPassport(type) {
+  const canvas = document.getElementById('passportCanvas');
+  if (!passportOrigImage || !canvas.width) { showNotif('⚠️', 'Load a photo first!', 'error'); return; }
+
+  if (type === 'single') {
+    if (!passportOrigImage) { showNotif('⚠️', 'Load a photo first!', 'error'); return; }
+    downloadCanvas(canvas, `passport-${selectedSize.name.toLowerCase()}.png`, 'image/png');
+    showNotif('✅', 'Passport photo exported!', 'success');
+  } else if (type === 'sheet') {
+    // Export print sheet
+    const grid = document.getElementById('printGrid');
+    if (!grid.children.length) { showNotif('⚠️', 'Generate sheet first', 'error'); return; }
+    const sheetCanvas = document.createElement('canvas');
+    const cols = parseInt(grid.style.gridTemplateColumns.split('repeat(')[1]) || 3;
+    const count = grid.children.length;
+    const rows = Math.ceil(count / cols);
+    const pw = canvas.width, ph = canvas.height;
+    const gap = 20, pad = 30;
+    sheetCanvas.width = cols * pw + (cols+1)*gap + pad*2;
+    sheetCanvas.height = rows * ph + (rows+1)*gap + pad*2;
+    const sCtx = sheetCanvas.getContext('2d');
+    sCtx.fillStyle = 'white';
+    sCtx.fillRect(0,0,sheetCanvas.width,sheetCanvas.height);
+    for (let i = 0; i < count; i++) {
+      const col = i % cols, row = Math.floor(i/cols);
+      const x = pad + col*(pw+gap) + gap;
+      const y = pad + row*(ph+gap) + gap;
+      sCtx.drawImage(canvas, x, y);
+      if (document.getElementById('cropLines').checked) {
+        sCtx.strokeStyle = '#aaa';
+        sCtx.lineWidth = 0.5;
+        sCtx.setLineDash([4,4]);
+        sCtx.strokeRect(x, y, pw, ph);
+        sCtx.setLineDash([]);
+      }
+    }
+    downloadCanvas(sheetCanvas, `passport-sheet-${selectedSize.name.toLowerCase()}.png`, 'image/png');
+    showNotif('✅', 'Print sheet exported!', 'success');
+  } else if (type === 'all') {
+    // Export all sizes
+    PASSPORT_SIZES.forEach((size, i) => {
+      setTimeout(() => {
+        const c = document.createElement('canvas');
+        const sc = 4;
+        c.width = size.w * sc; c.height = size.h * sc;
+        const ctx = c.getContext('2d');
+        ctx.fillStyle = passportBgColor;
+        ctx.fillRect(0,0,c.width,c.height);
+        ctx.drawImage(passportOrigImage, 0, 0, c.width, c.height);
+        downloadCanvas(c, `passport-${size.name.toLowerCase()}.png`, 'image/png');
+      }, i * 300);
+    });
+    showNotif('📦', 'All sizes downloading...', 'success');
+  }
+}
+
+function downloadCanvas(canvas, filename, mimeType) {
+  const a = document.createElement('a');
+  a.download = filename;
+  a.href = canvas.toDataURL ? canvas.toDataURL(mimeType, 0.95) : canvas.src;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
+// ============================================================
+// UTILITIES
+// ============================================================
+function resetAll() {
+  originalImage = null;
+  bgRemovedImageData = null;
+  document.getElementById('bgUploadZone').style.display = '';
+  document.getElementById('bgWorkspace').style.display = 'none';
+  document.getElementById('fileInput').value = '';
+}
+
+function resetPassport() {
+  passportOrigImage = null;
+  document.getElementById('passportUploadZone').style.display = '';
+  document.getElementById('passportWorkspace').style.display = 'none';
+  document.getElementById('passportFileInput').value = '';
+  document.getElementById('printSheetContainer').style.display = 'none';
+}
+
+function cropFace() {
+  showNotif('✂️', 'Auto-centering face...', 'success');
+  document.getElementById('pZoomRange').value = 110;
+  document.getElementById('pZoomVal').textContent = '110%';
+  updatePassportCanvas();
+}
+
+function zoomIn() { zoomLevel = Math.min(zoomLevel + 0.2, 3); applyZoom(); }
+function zoomOut() { zoomLevel = Math.max(zoomLevel - 0.2, 0.5); applyZoom(); }
+function resetZoom() { zoomLevel = 1; applyZoom(); }
+
+function applyZoom() {
+  const canvas = document.getElementById('mainCanvas');
+  canvas.style.transform = `scale(${zoomLevel})`;
+}
+
+function showProcessing(id, show) {
+  document.getElementById(id).classList.toggle('show', show);
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+function showNotif(icon, msg, type) {
+  const el = document.getElementById('notif');
+  document.getElementById('notifIcon').textContent = icon;
+  document.getElementById('notifMsg').textContent = msg;
+  el.className = `notif ${type} show`;
+  setTimeout(() => el.classList.remove('show'), 3000);
+}
+</script>
+</body>
+</html>
