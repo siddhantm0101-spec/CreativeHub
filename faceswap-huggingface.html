@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Face Swap — AI Free</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#07070e;--surface:#0e0e1a;--card:#121220;--border:#ffffff0d;--border2:#ffffff18;--text:#eeeeff;--muted:#6666aa;--purple:#9333ea;--blue:#2563eb;--rose:#f43f5e;--green:#10b981;--amber:#f59e0b;--nav-h:58px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh}
+nav{position:fixed;top:0;left:0;right:0;height:var(--nav-h);z-index:800;display:flex;align-items:center;background:rgba(7,7,14,0.95);backdrop-filter:blur(20px);border-bottom:1px solid var(--border2)}
+.logo{font-family:'Syne',sans-serif;font-weight:800;font-size:1rem;padding:0 1rem;white-space:nowrap;background:linear-gradient(135deg,var(--purple),var(--rose));-webkit-background-clip:text;-webkit-text-fill-color:transparent;cursor:pointer}
+.nav-tabs{display:flex;height:100%;padding:0 0.2rem;flex:1;overflow-x:auto;scrollbar-width:none}
+.nav-tabs::-webkit-scrollbar{display:none}
+.nav-tab{display:flex;align-items:center;gap:0.25rem;padding:0 0.65rem;font-size:0.69rem;font-weight:600;color:var(--muted);cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;transition:all 0.2s;white-space:nowrap}
+.nav-tab:hover{color:var(--text)}
+.nav-tab.active{color:#fff;border-bottom-color:#f43f5e}
+main{padding-top:calc(var(--nav-h) + 2rem);padding-bottom:4rem;max-width:900px;margin:0 auto;padding-left:1.5rem;padding-right:1.5rem}
+.page-title{font-family:'Syne',sans-serif;font-size:clamp(1.8rem,5vw,3rem);font-weight:800;margin-bottom:0.4rem;background:linear-gradient(135deg,var(--rose),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.page-sub{color:var(--muted);font-size:0.85rem;margin-bottom:1.5rem}
+.badge-row{display:flex;gap:0.5rem;margin-bottom:1.5rem;flex-wrap:wrap}
+.badge{font-size:0.65rem;font-weight:600;padding:0.3rem 0.75rem;border-radius:100px;letter-spacing:0.05em}
+.badge.green{background:rgba(16,185,129,0.15);color:var(--green);border:1px solid rgba(16,185,129,0.3)}
+.badge.purple{background:rgba(147,51,234,0.15);color:#c084fc;border:1px solid rgba(147,51,234,0.3)}
+.badge.rose{background:rgba(244,63,94,0.15);color:#fb7185;border:1px solid rgba(244,63,94,0.3)}
+.speed-note{background:rgba(245,158,11,0.07);border:1px solid rgba(245,158,11,0.2);border-radius:12px;padding:0.85rem 1rem;font-size:0.75rem;color:#fcd34d;margin-bottom:1.25rem;line-height:1.6}
+.upload-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem}
+@media(max-width:600px){.upload-grid{grid-template-columns:1fr}}
+.upload-box{background:var(--card);border:2px dashed var(--border2);border-radius:16px;min-height:220px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;position:relative;overflow:hidden;transition:all 0.25s;text-align:center;padding:2rem}
+.upload-box:hover{border-color:var(--rose);background:rgba(244,63,94,0.04)}
+.upload-box.filled{padding:0;border-style:solid;cursor:default}
+.upload-box.filled img{width:100%;height:100%;object-fit:cover;border-radius:14px;display:block}
+.upload-box input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;z-index:2}
+.box-label{position:absolute;top:10px;left:12px;z-index:3;font-size:0.6rem;font-weight:700;letter-spacing:0.12em;padding:4px 10px;border-radius:100px;text-transform:uppercase}
+.box-label.a{background:linear-gradient(135deg,var(--purple),var(--blue));color:#fff}
+.box-label.b{background:linear-gradient(135deg,var(--rose),var(--amber));color:#fff}
+.upload-icon{font-size:2.5rem;margin-bottom:0.75rem;opacity:0.5}
+.upload-title{font-family:'Syne',sans-serif;font-size:0.9rem;font-weight:700;margin-bottom:0.3rem}
+.upload-hint{font-size:0.7rem;color:var(--muted)}
+.remove-btn{position:absolute;top:40px;right:10px;z-index:5;background:rgba(244,63,94,0.85);color:#fff;border:none;cursor:pointer;width:28px;height:28px;border-radius:50%;font-size:0.75rem;display:flex;align-items:center;justify-content:center;transition:all 0.15s}
+.remove-btn:hover{background:var(--rose)}
+.options-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem}
+@media(max-width:500px){.options-row{grid-template-columns:1fr}}
+.option-card{background:var(--card);border:1px solid var(--border2);border-radius:12px;padding:0.85rem 1rem}
+.option-label{font-size:0.6rem;font-weight:600;letter-spacing:0.12em;color:var(--muted);text-transform:uppercase;margin-bottom:0.5rem}
+.option-select{width:100%;background:var(--surface);border:1px solid var(--border2);border-radius:8px;padding:0.5rem 0.75rem;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.8rem;outline:none;cursor:pointer}
+.btn-swap{width:100%;background:linear-gradient(135deg,var(--rose),var(--purple));color:#fff;border:none;border-radius:14px;padding:1rem;font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:700;letter-spacing:0.05em;cursor:pointer;transition:all 0.2s;margin-bottom:1rem;position:relative;overflow:hidden}
+.btn-swap:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 8px 24px rgba(244,63,94,0.35)}
+.btn-swap:disabled{opacity:0.45;cursor:not-allowed}
+.btn-swap.loading::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.15),transparent);animation:shimmer 1.5s infinite}
+@keyframes shimmer{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+.status{display:none;padding:0.85rem 1rem;border-radius:12px;font-size:0.82rem;font-weight:500;margin-bottom:1rem}
+.status.show{display:block}
+.status.info{background:rgba(37,99,235,0.12);border:1px solid rgba(37,99,235,0.3);color:#93c5fd}
+.status.ok{background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.3);color:#6ee7b7}
+.status.err{background:rgba(244,63,94,0.12);border:1px solid rgba(244,63,94,0.3);color:#fca5a5}
+.result{display:none;background:var(--card);border:1px solid var(--border2);border-radius:16px;overflow:hidden;margin-bottom:2rem}
+.result.show{display:block}
+.result-head{display:flex;align-items:center;justify-content:space-between;padding:1rem 1.25rem;border-bottom:1px solid var(--border)}
+.result-title{font-family:'Syne',sans-serif;font-size:0.85rem;font-weight:700}
+.result-body{padding:1.25rem;display:flex;justify-content:center}
+.result-body img{max-width:100%;max-height:500px;border-radius:10px}
+.dl-btn{display:inline-flex;align-items:center;gap:0.4rem;background:linear-gradient(135deg,var(--green),#059669);color:#fff;border-radius:8px;padding:0.5rem 1.1rem;font-size:0.8rem;font-weight:600;text-decoration:none;transition:all 0.2s}
+.dl-btn:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(16,185,129,0.3)}
+.tips-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-top:2rem}
+@media(max-width:600px){.tips-grid{grid-template-columns:1fr}}
+.tip-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1rem}
+.tip-head{font-family:'Syne',sans-serif;font-size:0.72rem;font-weight:700;color:var(--rose);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:0.5rem}
+.tip-body{font-size:0.73rem;color:var(--muted);line-height:1.6}
+</style>
+</head>
+<body>
+<nav>
+  <div class="logo" onclick="window.location='index.html'">CreativeHub</div>
+  <div class="nav-tabs">
+    <button class="nav-tab" onclick="window.location='index.html'">🏠 Home</button>
+    <button class="nav-tab" onclick="window.location='design.html'">🎨 Design</button>
+    <button class="nav-tab" onclick="window.location='image.html'">🖼️ Image</button>
+    <button class="nav-tab" onclick="window.location='pdf.html'">📄 PDF</button>
+    <button class="nav-tab" onclick="window.location='meme.html'">😂 Meme</button>
+    <button class="nav-tab" onclick="window.location='thumbnail.html'">▶️ Thumbnail</button>
+    <button class="nav-tab" onclick="window.location='textart.html'">✍️ Text Art</button>
+    <button class="nav-tab" onclick="window.location='qrgen.html'">📱 QR Code</button>
+    <button class="nav-tab" onclick="window.location='pixelart.html'">🟥 Pixel Art</button>
+    <button class="nav-tab" onclick="window.location='gradbuilder.html'">🌈 Gradient</button>
+    <button class="nav-tab" onclick="window.location='palette.html'">🎨 Palette</button>
+    <button class="nav-tab" onclick="window.location='tools.html'">🛠️ Tools</button>
+    <button class="nav-tab" onclick="window.location='ascii.html'">📟 ASCII</button>
+    <button class="nav-tab" onclick="window.location='favicon.html'">🔖 Favicon</button>
+    <button class="nav-tab" onclick="window.location='patterns.html'">⬡ Patterns</button>
+    <button class="nav-tab" onclick="window.location='social.html'">📲 Social</button>
+    <button class="nav-tab" onclick="window.location='timer.html'">⏱️ Timer</button>
+    <button class="nav-tab" onclick="window.location='emoji-art.html'">🎭 Emoji Art</button>
+    <button class="nav-tab" onclick="window.location='bg-remover-passport.html'">🪄 BG Remover</button>
+    <button class="nav-tab active">🔄 Face Swap</button>
+  </div>
+</nav>
+<main>
+  <div class="page-title">🔄 AI Face Swap</div>
+  <div class="page-sub">Upload two photos and swap faces using Hugging Face free AI — no login required</div>
+  <div class="badge-row">
+    <span class="badge green">✅ 100% Free</span>
+    <span class="badge purple">🤗 HuggingFace API</span>
+    <span class="badge rose">⚡ Parallel Auto-Retry</span>
+  </div>
+  <div class="speed-note">
+    ⚡ <strong>Speed Tip:</strong> Select <strong>"Auto (Fastest)"</strong> — it tries all 3 AI spaces <em>simultaneously</em> and uses whichever responds first. Single-space mode also has auto-retry on cold-start. First request may take 20–40 sec.
+  </div>
+  <div class="upload-grid">
+    <div class="upload-box" id="boxA">
+      <span class="box-label a">01 — Source Face</span>
+      <input type="file" accept="image/*" id="inpA" onchange="loadFile('A',this)">
+      <div class="upload-icon">👤</div>
+      <div class="upload-title">Source Face</div>
+      <div class="upload-hint">Face to transplant<br>JPG · PNG · WEBP</div>
+    </div>
+    <div class="upload-box" id="boxB">
+      <span class="box-label b">02 — Target Photo</span>
+      <input type="file" accept="image/*" id="inpB" onchange="loadFile('B',this)">
+      <div class="upload-icon">🖼️</div>
+      <div class="upload-title">Target Photo</div>
+      <div class="upload-hint">Where the face goes<br>JPG · PNG · WEBP</div>
+    </div>
+  </div>
+  <div class="options-row">
+    <div class="option-card">
+      <div class="option-label">AI Space Model</div>
+      <select id="spaceModel" class="option-select">
+        <option value="auto" selected>⚡ Auto (Fastest — tries all)</option>
+        <option value="tonyassi/face-swap">tonyassi/face-swap (Recommended)</option>
+        <option value="felixrosberg/face-swap">felixrosberg/face-swap</option>
+        <option value="Dentro/face-swap">Dentro/face-swap</option>
+      </select>
+    </div>
+    <div class="option-card">
+      <div class="option-label">Output Format</div>
+      <select id="outFmt" class="option-select">
+        <option value="png" selected>PNG (Best Quality)</option>
+        <option value="jpeg">JPEG (Smaller File)</option>
+        <option value="webp">WEBP</option>
+      </select>
+    </div>
+  </div>
+  <button class="btn-swap" id="swapBtn" disabled onclick="doSwap()">🔄 SWAP FACES NOW</button>
+  <div class="status" id="status"></div>
+  <div class="result" id="result">
+    <div class="result-head">
+      <span class="result-title">✅ Face Swap Result</span>
+      <a class="dl-btn" id="dlBtn" href="#" download="faceswap.png">⬇ Download</a>
+    </div>
+    <div class="result-body">
+      <img id="resultImg" src="" alt="Face Swap Result">
+    </div>
+  </div>
+  <div class="tips-grid">
+    <div class="tip-card">
+      <div class="tip-head">🎯 Best Results</div>
+      <div class="tip-body">Use clear, front-facing photos with good lighting. Both images should have fully visible faces. Avoid sunglasses, extreme angles, or heavy filters.</div>
+    </div>
+    <div class="tip-card">
+      <div class="tip-head">⚙️ How It Works</div>
+      <div class="tip-body">Uses Hugging Face Gradio Spaces as a free API. Your images are sent directly to the HF server, face-swapped by AI, then returned to your browser.</div>
+    </div>
+    <div class="tip-card">
+      <div class="tip-head">🐢 Still Slow?</div>
+      <div class="tip-body">HF Spaces go to "sleep" when unused (cold start). Use <strong>Auto</strong> mode for parallel requests, or wait 30s and retry. Subsequent swaps are much faster.</div>
+    </div>
+  </div>
+</main>
+<script type="module">
+import { Client } from "https://cdn.jsdelivr.net/npm/@gradio/client/dist/index.min.js";
+
+const files = { A: null, B: null };
+const HF_TOKEN = "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";
+
+const SPACES = [
+  { id: 'tonyassi/face-swap',     fn: '/predict',       args: (a,b) => [a,b] },
+  { id: 'felixrosberg/face-swap', fn: '/run_inference', args: (a,b) => [a,b,0,0] },
+  { id: 'Dentro/face-swap',       fn: '/predict',       args: (a,b) => [a,b] },
+];
+
+window.loadFile = function(side, input) {
+  const file = input.files[0];
+  if (!file) return;
+  files[side] = file;
+  const box = document.getElementById('box' + side);
+  const tagEl = box.querySelector('.box-label').cloneNode(true);
+  const fileInput = box.querySelector('input[type=file]');
+  box.innerHTML = '';
+  box.appendChild(tagEl);
+  box.appendChild(fileInput);
+  box.classList.add('filled');
+  const img = document.createElement('img');
+  img.src = URL.createObjectURL(file);
+  box.appendChild(img);
+  const rm = document.createElement('button');
+  rm.className = 'remove-btn';
+  rm.innerHTML = '✕';
+  rm.onclick = ev => { ev.stopPropagation(); clearFile(side); };
+  box.appendChild(rm);
+  checkReady();
+};
+
+window.clearFile = function(side) {
+  files[side] = null;
+  const box = document.getElementById('box' + side);
+  const isA = side === 'A';
+  box.classList.remove('filled');
+  box.innerHTML = `
+    <span class="box-label ${isA?'a':'b'}">${isA?'01 — Source Face':'02 — Target Photo'}</span>
+    <input type="file" accept="image/*" id="inp${side}" onchange="loadFile('${side}',this)">
+    <div class="upload-icon">${isA?'👤':'🖼️'}</div>
+    <div class="upload-title">${isA?'Source Face':'Target Photo'}</div>
+    <div class="upload-hint">${isA?'Face to transplant':'Where the face goes'}<br>JPG · PNG · WEBP</div>
+  `;
+  checkReady();
+};
+
+function checkReady() {
+  document.getElementById('swapBtn').disabled = !(files.A && files.B);
+}
+
+function setStatus(msg, type) {
+  const el = document.getElementById('status');
+  el.textContent = msg;
+  el.className = 'status show ' + type;
+}
+
+async function trySpace(space, fileA, fileB) {
+  const app = await Client.connect(space.id, { hf_token: HF_TOKEN });
+  const result = await app.predict(space.fn, space.args(fileA, fileB));
+  const out = result?.data?.[0];
+  if (!out) throw new Error('No output');
+  if (typeof out === 'string') return out;
+  if (out?.url) return out.url;
+  if (out?.path) return out.path;
+  if (out instanceof Blob) return URL.createObjectURL(out);
+  throw new Error('Unknown output format');
+}
+
+window.doSwap = async function() {
+  if (!files.A || !files.B) { setStatus('⚠ Upload both images first.', 'err'); return; }
+  const btn = document.getElementById('swapBtn');
+  btn.disabled = true;
+  btn.classList.add('loading');
+  btn.textContent = '⏳ Processing…';
+  document.getElementById('result').classList.remove('show');
+  const selectedSpace = document.getElementById('spaceModel').value;
+  const fmt = document.getElementById('outFmt').value;
+  try {
+    let outputUrl = null;
+    if (selectedSpace === 'auto') {
+      setStatus('⚡ Connecting to all AI spaces simultaneously…', 'info');
+      outputUrl = await Promise.any(
+        SPACES.map(space =>
+          trySpace(space, files.A, files.B).then(url => {
+            setStatus(`✓ Got result from ${space.id}!`, 'ok');
+            return url;
+          })
+        )
+      );
+    } else {
+      const space = SPACES.find(s => s.id === selectedSpace) || SPACES[0];
+      setStatus(`🔌 Connecting to ${space.id}…`, 'info');
+      try {
+        outputUrl = await trySpace(space, files.A, files.B);
+      } catch (e1) {
+        if (e1.message?.includes('503') || e1.message?.includes('unavailable') || e1.message?.includes('starting')) {
+          setStatus(`⏳ Space warming up… retrying in 8s`, 'info');
+          await new Promise(r => setTimeout(r, 8000));
+          outputUrl = await trySpace(space, files.A, files.B);
+        } else throw e1;
+      }
+    }
+    if (!outputUrl) throw new Error('No image returned. Try again.');
+    document.getElementById('resultImg').src = outputUrl;
+    document.getElementById('dlBtn').href = outputUrl;
+    document.getElementById('dlBtn').download = `faceswap.${fmt}`;
+    document.getElementById('result').classList.add('show');
+    setStatus('✅ Face swap complete! Scroll down to see result.', 'ok');
+    document.getElementById('result').scrollIntoView({ behavior: 'smooth' });
+  } catch (err) {
+    let msg = err?.message || 'Something went wrong.';
+    if (msg.includes('401') || msg.includes('unauthorized')) msg = '🔑 Auth error — token may be invalid.';
+    else if (msg.includes('503') || msg.includes('unavailable')) msg = '🐢 All spaces are busy/offline. Wait 30s and try Auto mode.';
+    else if (msg.includes('429')) msg = '⏱ Rate limited — wait a minute and retry.';
+    else if (msg.includes('AggregateError') || msg.includes('All promises')) msg = '😴 All AI spaces offline. Try again in 1–2 minutes.';
+    setStatus('❌ ' + msg, 'err');
+    console.error('Face swap error:', err);
+  } finally {
+    btn.disabled = false;
+    btn.classList.remove('loading');
+    btn.textContent = '🔄 SWAP FACES NOW';
+    checkReady();
+  }
+};
+</script>
+</body>
+</html>
