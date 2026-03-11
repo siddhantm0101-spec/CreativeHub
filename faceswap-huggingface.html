@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FaceSwap — HuggingFace Free</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f5f0e8;
+    --ink: #1a1611;
+    --cream: #ede8dc;
+    --border: #c8bfa8;
+    --accent: #e85d1a;
+    --accent2: #2563c4;
+    --muted: #8a7f6e;
+    --green: #1a7a3c;
+    --panel: #fff9ef;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'DM Mono', monospace;
+    min-height: 100vh;
+  }
+
+  /* Subtle grain texture */
+  body::after {
+    content: '';
+    position: fixed; inset: 0; z-index: 9999;
+    pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    opacity: 0.5;
+  }
+
+  /* ── HEADER ── */
+  header {
+    border-bottom: 2px solid var(--ink);
+    padding: 0 40px;
+    display: flex; align-items: stretch;
+    height: 64px;
+  }
+
+  .logo-block {
+    display: flex; align-items: center;
+    border-right: 2px solid var(--ink);
+    padding-right: 24px; margin-right: 24px;
+    gap: 10px;
+  }
+
+  .logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.8rem;
+    letter-spacing: 0.04em;
+    line-height: 1;
+  }
+
+  .logo em { color: var(--accent); font-style: normal; }
+
+  .tag-hf {
+    background: var(--ink);
+    color: var(--bg);
+    font-size: 0.55rem;
+    padding: 3px 8px;
+    letter-spacing: 0.15em;
+    border-radius: 2px;
+    align-self: center;
+  }
+
+  .header-nav {
+    display: flex; align-items: center; gap: 0;
+    flex: 1;
+  }
+
+  .nav-item {
+    font-size: 0.65rem; letter-spacing: 0.12em;
+    padding: 0 18px;
+    border-right: 1px solid var(--border);
+    color: var(--muted);
+    height: 100%;
+    display: flex; align-items: center;
+  }
+
+  .nav-item.active { color: var(--ink); font-weight: 500; }
+
+  /* ── MAIN ── */
+  main {
+    max-width: 1060px;
+    margin: 0 auto;
+    padding: 52px 24px 80px;
+  }
+
+  /* ── TITLE BLOCK ── */
+  .title-row {
+    display: flex; align-items: flex-end;
+    justify-content: space-between;
+    margin-bottom: 40px;
+    border-bottom: 2px solid var(--ink);
+    padding-bottom: 20px;
+  }
+
+  h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(3rem, 8vw, 6rem);
+    line-height: 0.9;
+    letter-spacing: 0.01em;
+  }
+
+  h1 .line2 { color: var(--accent); display: block; }
+
+  .issue-info {
+    text-align: right;
+    font-size: 0.62rem;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    line-height: 1.8;
+  }
+
+  /* ── FORM ── */
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+  }
+
+  /* Token row */
+  .token-row {
+    display: flex; align-items: center; gap: 12px;
+    background: var(--panel);
+    border: 2px solid var(--ink);
+    padding: 14px 18px;
+    margin-bottom: 20px;
+  }
+
+  .token-label {
+    font-size: 0.6rem; letter-spacing: 0.14em;
+    white-space: nowrap; font-weight: 500;
+    border-right: 1px solid var(--border);
+    padding-right: 14px;
+  }
+
+  .token-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--ink);
+  }
+
+  .token-input::placeholder { color: var(--muted); }
+
+  .token-link {
+    font-size: 0.6rem; color: var(--accent2);
+    text-decoration: none; white-space: nowrap;
+    letter-spacing: 0.06em;
+  }
+
+  .token-link:hover { text-decoration: underline; }
+
+  /* Upload box */
+  .upload-box {
+    background: var(--panel);
+    border: 2px solid var(--ink);
+    position: relative;
+    cursor: pointer;
+    transition: background 0.2s;
+    min-height: 260px;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    text-align: center;
+    padding: 28px;
+    overflow: hidden;
+  }
+
+  .upload-box:hover { background: var(--cream); }
+
+  .upload-box.filled {
+    padding: 0;
+    cursor: default;
+  }
+
+  .upload-box.filled img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .upload-box input[type=file] {
+    position: absolute; inset: 0; opacity: 0; cursor: pointer;
+  }
+
+  .box-tag {
+    position: absolute; top: 0; left: 0;
+    background: var(--ink); color: var(--bg);
+    font-size: 0.58rem; letter-spacing: 0.14em;
+    padding: 5px 12px;
+    z-index: 2;
+  }
+
+  .box-tag.b { background: var(--accent); }
+
+  .upload-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 4rem; color: var(--border);
+    line-height: 1; margin-bottom: 8px;
+  }
+
+  .upload-title {
+    font-size: 0.85rem; font-weight: 500;
+    margin-bottom: 4px; letter-spacing: 0.04em;
+  }
+
+  .upload-hint {
+    font-size: 0.65rem; color: var(--muted); line-height: 1.5;
+  }
+
+  .remove-btn {
+    position: absolute; top: 28px; right: 8px; z-index: 5;
+    background: var(--ink); color: var(--bg);
+    border: none; cursor: pointer;
+    width: 26px; height: 26px;
+    font-size: 0.8rem;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s;
+  }
+
+  .remove-btn:hover { background: var(--accent); }
+
+  /* Options */
+  .options-row {
+    display: flex; gap: 0; margin-bottom: 20px;
+    border: 2px solid var(--ink);
+    overflow: hidden;
+  }
+
+  .opt {
+    flex: 1;
+    border-right: 2px solid var(--ink);
+    padding: 12px 14px;
+  }
+
+  .opt:last-child { border-right: none; }
+
+  .opt label {
+    display: block;
+    font-size: 0.55rem; letter-spacing: 0.14em;
+    color: var(--muted); margin-bottom: 6px;
+  }
+
+  .opt select {
+    width: 100%;
+    background: transparent;
+    border: none; outline: none;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem; color: var(--ink);
+    cursor: pointer;
+    appearance: none;
+  }
+
+  /* Big swap button */
+  .btn-swap {
+    width: 100%;
+    background: var(--ink);
+    color: var(--bg);
+    border: 2px solid var(--ink);
+    padding: 18px 0;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.6rem;
+    letter-spacing: 0.12em;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    margin-bottom: 16px;
+    position: relative; overflow: hidden;
+  }
+
+  .btn-swap:hover:not(:disabled) {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+
+  .btn-swap:disabled {
+    opacity: 0.3; cursor: not-allowed;
+  }
+
+  .btn-swap.loading::after {
+    content: '';
+    position: absolute; top: 0; left: -100%;
+    width: 60%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+    animation: sweep 1s infinite;
+  }
+
+  @keyframes sweep {
+    0% { left: -60%; }
+    100% { left: 110%; }
+  }
+
+  /* Status bar */
+  .status {
+    display: none;
+    padding: 12px 16px;
+    border: 2px solid;
+    font-size: 0.75rem;
+    line-height: 1.5;
+    margin-bottom: 12px;
+  }
+
+  .status.show { display: block; }
+  .status.err { border-color: var(--accent); color: var(--accent); background: #fff3f0; }
+  .status.ok { border-color: var(--green); color: var(--green); background: #f0fff5; }
+  .status.info { border-color: var(--accent2); color: var(--accent2); background: #f0f5ff; }
+
+  /* Result */
+  .result { display: none; margin-top: 44px; }
+  .result.show { display: block; }
+
+  .result-head {
+    display: flex; align-items: center; gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  .result-label {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.6rem; letter-spacing: 0.06em;
+  }
+
+  .result-line { flex: 1; height: 2px; background: var(--ink); }
+
+  .result-frame {
+    border: 2px solid var(--ink);
+    overflow: hidden;
+    background: var(--panel);
+  }
+
+  .result-frame img {
+    display: block; width: 100%;
+    max-height: 540px; object-fit: contain;
+  }
+
+  .dl-row { display: flex; gap: 12px; margin-top: 12px; }
+
+  .dl-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 10px 20px;
+    background: transparent;
+    border: 2px solid var(--ink);
+    color: var(--ink);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem; cursor: pointer;
+    text-decoration: none; letter-spacing: 0.06em;
+    transition: all 0.15s;
+  }
+
+  .dl-btn:hover { background: var(--ink); color: var(--bg); }
+
+  /* Info footer */
+  .info-strip {
+    margin-top: 52px;
+    display: grid;
+    grid-template-columns: repeat(3,1fr);
+    border-top: 2px solid var(--ink);
+    padding-top: 28px;
+    gap: 24px;
+  }
+
+  .info-block-head {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1rem; letter-spacing: 0.08em;
+    margin-bottom: 8px;
+  }
+
+  .info-block p {
+    font-size: 0.68rem; color: var(--muted); line-height: 1.7;
+  }
+
+  .info-block a { color: var(--accent2); text-decoration: none; }
+  .info-block a:hover { text-decoration: underline; }
+
+  @media (max-width: 640px) {
+    header { padding: 0 16px; }
+    .form-grid { grid-template-columns: 1fr; }
+    .info-strip { grid-template-columns: 1fr; }
+    .options-row { flex-direction: column; }
+    .opt { border-right: none; border-bottom: 2px solid var(--ink); }
+    .opt:last-child { border-bottom: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="logo-block">
+    <div class="logo">FACE<em>SWAP</em></div>
+    <span class="tag-hf">HUGGING FACE FREE</span>
+  </div>
+  <nav class="header-nav">
+    <span class="nav-item active">SWAP</span>
+    <span class="nav-item">100% FREE</span>
+    <span class="nav-item">NO CREDIT CARD</span>
+  </nav>
+</header>
+
+<main>
+
+  <!-- TITLE -->
+  <div class="title-row">
+    <h1>
+      AI FACE
+      <span class="line2">SWAPPER</span>
+    </h1>
+    <div class="issue-info">
+      POWERED BY<br>
+      HUGGING FACE<br>
+      GRADIO SPACES<br>
+      <strong style="color:var(--accent)">100% FREE API</strong>
+    </div>
+  </div>
+
+
+    <span class="token-label">✅ API KEY CONNECTED</span>
+    <input type="hidden" id="hfToken" value="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">
+    <span style="font-size:0.68rem;color:var(--green);letter-spacing:0.08em;font-family:'DM Mono',monospace;">Hugging Face token active — ready to use!</span>
+  </div>
+
+  <!-- UPLOAD BOXES -->
+  <div class="form-grid">
+    <div class="upload-box" id="boxA">
+      <span class="box-tag">01 — SOURCE FACE</span>
+      <input type="file" accept="image/*" id="inpA" onchange="loadFile('A', this)">
+      <div class="upload-num">01</div>
+      <div class="upload-title">SOURCE FACE</div>
+      <div class="upload-hint">The face to transplant<br>JPG · PNG · WEBP</div>
+    </div>
+
+    <div class="upload-box" id="boxB">
+      <span class="box-tag b">02 — TARGET PHOTO</span>
+      <input type="file" accept="image/*" id="inpB" onchange="loadFile('B', this)">
+      <div class="upload-num">02</div>
+      <div class="upload-title">TARGET PHOTO</div>
+      <div class="upload-hint">Where the face goes<br>JPG · PNG · WEBP</div>
+    </div>
+  </div>
+
+  <!-- OPTIONS -->
+  <div class="options-row">
+    <div class="opt">
+      <label>SPACE MODEL</label>
+      <select id="spaceModel">
+        <option value="tonyassi/face-swap" selected>tonyassi/face-swap (Recommended)</option>
+        <option value="felixrosberg/face-swap">felixrosberg/face-swap</option>
+        <option value="Dentro/face-swap">Dentro/face-swap</option>
+      </select>
+    </div>
+    <div class="opt">
+      <label>OUTPUT FORMAT</label>
+      <select id="outFmt">
+        <option value="png" selected>PNG</option>
+        <option value="jpeg">JPEG</option>
+        <option value="webp">WEBP</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- SWAP BUTTON -->
+  <button class="btn-swap" id="swapBtn" disabled onclick="doSwap()">
+    ⚡ SWAP FACES NOW
+  </button>
+
+  <div class="status" id="status"></div>
+
+  <!-- RESULT -->
+  <div class="result" id="result">
+    <div class="result-head">
+      <span class="result-label">RESULT</span>
+      <div class="result-line"></div>
+    </div>
+    <div class="result-frame">
+      <img id="resultImg" src="" alt="Face Swap Result">
+    </div>
+    <div class="dl-row">
+      <a class="dl-btn" id="dlBtn" href="#" download="faceswap.png">↓ DOWNLOAD RESULT</a>
+    </div>
+  </div>
+
+  <!-- INFO STRIP -->
+  <div class="info-strip">
+    <div class="info-block">
+      <div class="info-block-head">GET YOUR FREE TOKEN</div>
+      <p>
+        Sign up at <a href="https://huggingface.co" target="_blank">huggingface.co</a> — completely free.
+        Go to <a href="https://huggingface.co/settings/tokens" target="_blank">Settings → Tokens</a>
+        → New Token → Read access → Copy it above.
+        No credit card needed ever.
+      </p>
+    </div>
+    <div class="info-block">
+      <div class="info-block-head">HOW IT WORKS</div>
+      <p>
+        This page uses the <strong>@gradio/client</strong> JS library to call
+        public Hugging Face Spaces as a free API. Your images are sent directly
+        to the HF server and the swapped result is returned to your browser.
+      </p>
+    </div>
+    <div class="info-block">
+      <div class="info-block-head">BEST RESULTS TIPS</div>
+      <p>
+        Use clear, front-facing photos with good lighting.
+        Both images should have visible faces.
+        Avoid extreme angles, sunglasses, or heavy filters for realistic output.
+      </p>
+    </div>
+  </div>
+
+</main>
+
+<!-- Load Gradio JS Client from CDN -->
+<script type="module">
+  import { Client } from "https://cdn.jsdelivr.net/npm/@gradio/client/dist/index.min.js";
+
+  const files = { A: null, B: null };
+
+  window.loadFile = function(side, input) {
+    const file = input.files[0];
+    if (!file) return;
+    files[side] = file;
+
+    const box = document.getElementById('box' + side);
+    const tagEl = box.querySelector('.box-tag').cloneNode(true);
+    const fileInput = box.querySelector('input[type=file]');
+
+    box.innerHTML = '';
+    box.appendChild(tagEl);
+    box.appendChild(fileInput);
+    box.classList.add('filled');
+
+    const img = document.createElement('img');
+    img.src = URL.createObjectURL(file);
+    box.appendChild(img);
+
+    const rm = document.createElement('button');
+    rm.className = 'remove-btn';
+    rm.innerHTML = '✕';
+    rm.onclick = ev => { ev.stopPropagation(); clearFile(side); };
+    box.appendChild(rm);
+
+    checkReady();
+  };
+
+  window.clearFile = function(side) {
+    files[side] = null;
+    const box = document.getElementById('box' + side);
+    const isA = side === 'A';
+    box.classList.remove('filled');
+    box.innerHTML = `
+      <span class="box-tag${isA ? '' : ' b'}">${isA ? '01 — SOURCE FACE' : '02 — TARGET PHOTO'}</span>
+      <input type="file" accept="image/*" id="inp${side}" onchange="loadFile('${side}', this)">
+      <div class="upload-num">${isA ? '01' : '02'}</div>
+      <div class="upload-title">${isA ? 'SOURCE FACE' : 'TARGET PHOTO'}</div>
+      <div class="upload-hint">${isA ? 'The face to transplant' : 'Where the face goes'}<br>JPG · PNG · WEBP</div>
+    `;
+    checkReady();
+  };
+
+  function checkReady() {
+    document.getElementById('swapBtn').disabled = !(files.A && files.B);
+  }
+
+  function setStatus(msg, type) {
+    const el = document.getElementById('status');
+    el.textContent = msg;
+    el.className = 'status show ' + type;
+  }
+
+  window.doSwap = async function() {
+    const token = document.getElementById('hfToken').value.trim();
+    if (!files.A || !files.B) {
+      setStatus('⚠ Upload both images first.', 'err');
+      return;
+    }
+
+    const btn = document.getElementById('swapBtn');
+    btn.disabled = true;
+    btn.classList.add('loading');
+    btn.textContent = '⏳ PROCESSING...';
+    setStatus('Connecting to Hugging Face Space...', 'info');
+    document.getElementById('result').classList.remove('show');
+
+    const spaceName = document.getElementById('spaceModel').value;
+
+    try {
+      setStatus(`Connecting to ${spaceName}...`, 'info');
+
+      const clientOpts = { hf_token: token };
+      const app = await Client.connect(spaceName, clientOpts);
+
+      setStatus('Connected! Uploading images and running face swap...', 'info');
+
+      let result;
+      // Different spaces have different API signatures
+      if (spaceName === 'tonyassi/face-swap') {
+        result = await app.predict("/predict", [
+          files.A,  // source face
+          files.B,  // target image
+        ]);
+      } else if (spaceName === 'felixrosberg/face-swap') {
+        result = await app.predict("/run_inference", [
+          files.A,
+          files.B,
+          0,   // anonymization slider
+          0,   // sharpen
+        ]);
+      } else {
+        // Dentro/face-swap and others
+        result = await app.predict("/predict", [
+          files.A,
+          files.B,
+        ]);
+      }
+
+      // Extract result image
+      let outputUrl = null;
+      const data = result.data;
+
+      if (data && data[0]) {
+        const out = data[0];
+        if (typeof out === 'string') {
+          outputUrl = out;
+        } else if (out && out.url) {
+          outputUrl = out.url;
+        } else if (out && out.path) {
+          outputUrl = out.path;
+        } else if (out instanceof Blob) {
+          outputUrl = URL.createObjectURL(out);
+        }
+      }
+
+      if (!outputUrl) throw new Error('No image returned from the Space. Try a different model.');
+
+      const fmt = document.getElementById('outFmt').value;
+      document.getElementById('resultImg').src = outputUrl;
+      document.getElementById('dlBtn').href = outputUrl;
+      document.getElementById('dlBtn').download = `faceswap.${fmt}`;
+      document.getElementById('result').classList.add('show');
+
+      setStatus('✓ Face swap complete! Scroll down to see the result.', 'ok');
+      document.getElementById('result').scrollIntoView({ behavior: 'smooth' });
+
+    } catch (err) {
+      let msg = err.message || 'Something went wrong.';
+      if (msg.includes('401') || msg.includes('unauthorized')) {
+        msg = '401 Unauthorized — Check your HF token. Make sure it has "read" permission.';
+      } else if (msg.includes('503') || msg.includes('unavailable')) {
+        msg = 'Space is starting up (cold start). Wait 30 seconds and try again.';
+      } else if (msg.includes('429')) {
+        msg = 'Rate limited — wait a minute and retry, or use a different Space.';
+      }
+      setStatus('✗ ' + msg, 'err');
+      console.error('Face swap error:', err);
+    } finally {
+      btn.disabled = false;
+      btn.classList.remove('loading');
+      btn.textContent = '⚡ SWAP FACES NOW';
+      checkReady();
+    }
+  };
+</script>
+
+</body>
+</html>
