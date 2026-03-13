@@ -1,0 +1,1271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3D Profile Picture Studio — Creative Hub</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/heic2any/0.0.4/heic2any.min.js"></script>
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --card: #1a1a28;
+    --accent: #ff2d6b;
+    --accent2: #7c3aed;
+    --accent3: #00d4ff;
+    --text: #f0f0ff;
+    --muted: #6b6b8a;
+    --border: #2a2a3a;
+    --glow: 0 0 30px rgba(255,45,107,0.3);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Background grid */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,45,107,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,45,107,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container { max-width: 1400px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
+
+  /* Header */
+  header {
+    padding: 32px 0 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 22px;
+    letter-spacing: -0.5px;
+  }
+
+  .logo span { color: var(--accent); }
+
+  .badge {
+    background: linear-gradient(135deg, var(--accent2), var(--accent));
+    padding: 6px 16px;
+    border-radius: 100px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  /* Hero */
+  .hero {
+    text-align: center;
+    padding: 60px 0 40px;
+  }
+
+  .hero h1 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: clamp(36px, 6vw, 72px);
+    line-height: 1;
+    letter-spacing: -2px;
+    margin-bottom: 16px;
+  }
+
+  .hero h1 .line2 {
+    background: linear-gradient(90deg, var(--accent), var(--accent3), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero p {
+    color: var(--muted);
+    font-size: 14px;
+    letter-spacing: 0.5px;
+    max-width: 500px;
+    margin: 0 auto;
+  }
+
+  /* Upload Zone */
+  .upload-section {
+    display: flex;
+    justify-content: center;
+    margin: 40px 0;
+  }
+
+  .upload-zone {
+    border: 2px dashed var(--border);
+    border-radius: 20px;
+    padding: 50px 80px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: var(--surface);
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+    max-width: 550px;
+  }
+
+  .upload-zone::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at center, rgba(255,45,107,0.08) 0%, transparent 70%);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .upload-zone:hover, .upload-zone.drag-over {
+    border-color: var(--accent);
+    box-shadow: var(--glow);
+    transform: translateY(-2px);
+  }
+
+  .upload-zone:hover::before, .upload-zone.drag-over::before {
+    opacity: 1;
+  }
+
+  .upload-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+    display: block;
+  }
+
+  .upload-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  .upload-sub { color: var(--muted); font-size: 12px; }
+
+  .upload-btn {
+    display: inline-block;
+    margin-top: 20px;
+    padding: 12px 32px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border: none;
+    border-radius: 100px;
+    color: white;
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .upload-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 8px 30px rgba(255,45,107,0.5);
+  }
+
+  input[type="file"] { display: none; }
+
+  /* Preview of uploaded image */
+  .source-preview {
+    display: none;
+    text-align: center;
+    margin-bottom: 40px;
+  }
+
+  .source-preview.visible { display: block; }
+
+  .source-img-wrap {
+    display: inline-block;
+    position: relative;
+    margin-bottom: 16px;
+  }
+
+  .source-img-wrap img {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid var(--accent);
+    box-shadow: 0 0 40px rgba(255,45,107,0.4);
+  }
+
+  .source-label {
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    display: block;
+  }
+
+  .change-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 8px 20px;
+    border-radius: 100px;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: all 0.2s;
+  }
+
+  .change-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* Generate button */
+  .generate-wrap {
+    text-align: center;
+    margin-bottom: 50px;
+  }
+
+  .generate-btn {
+    padding: 18px 60px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border: none;
+    border-radius: 100px;
+    color: white;
+    font-family: 'Syne', sans-serif;
+    font-size: 18px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+    letter-spacing: 0.5px;
+  }
+
+  .generate-btn::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.2), transparent);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .generate-btn:hover { transform: translateY(-3px); box-shadow: 0 20px 50px rgba(255,45,107,0.5); }
+  .generate-btn:hover::after { opacity: 1; }
+  .generate-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  /* Progress */
+  .progress-wrap {
+    display: none;
+    margin: 0 auto 40px;
+    max-width: 400px;
+    text-align: center;
+  }
+
+  .progress-wrap.visible { display: block; }
+
+  .progress-label {
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 12px;
+    letter-spacing: 1px;
+  }
+
+  .progress-bar-outer {
+    height: 4px;
+    background: var(--border);
+    border-radius: 100px;
+    overflow: hidden;
+  }
+
+  .progress-bar-inner {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent3));
+    border-radius: 100px;
+    transition: width 0.3s ease;
+    width: 0%;
+  }
+
+  /* Section title */
+  .section-title {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 28px;
+    letter-spacing: -1px;
+    margin-bottom: 8px;
+  }
+
+  .section-subtitle {
+    color: var(--muted);
+    font-size: 12px;
+    margin-bottom: 32px;
+    letter-spacing: 1px;
+  }
+
+  /* Grid */
+  .results-section { display: none; }
+  .results-section.visible { display: block; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 20px;
+    margin-bottom: 60px;
+  }
+
+  .card {
+    background: var(--card);
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+    animation: fadeIn 0.5s ease both;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px) scale(0.95); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .card:hover {
+    border-color: var(--accent);
+    transform: translateY(-6px);
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5), 0 0 30px rgba(255,45,107,0.2);
+  }
+
+  .card-canvas-wrap {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1;
+    background: #0d0d18;
+  }
+
+  .card canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  .card-info {
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .card-name {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: var(--text);
+  }
+
+  .download-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+
+  .download-btn:hover { transform: scale(1.15); box-shadow: 0 4px 20px rgba(255,45,107,0.5); }
+
+  .download-btn svg { width: 14px; height: 14px; fill: white; }
+
+  /* Style tag */
+  .style-tag {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.1);
+    padding: 4px 10px;
+    border-radius: 100px;
+    font-size: 9px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.8);
+    font-weight: 700;
+  }
+
+  /* Scroll reveal */
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .hero { animation: slideUp 0.8s ease; }
+  .upload-section { animation: slideUp 0.8s ease 0.1s both; }
+
+  /* Responsive */
+  @media (max-width: 600px) {
+    .upload-zone { padding: 40px 30px; }
+    .grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <div class="logo">Creative<span>Hub</span></div>
+    <div class="badge">3D Studio</div>
+  </header>
+
+  <div class="hero">
+    <h1>
+      Photo to<br>
+      <span class="line2">3D Profile</span>
+    </h1>
+    <p>Upload your photo — get 20 stunning 3D profile styles. Download the ones you love.</p>
+  </div>
+
+  <div class="upload-section">
+    <div class="upload-zone" id="dropZone">
+      <span class="upload-icon">📸</span>
+      <div class="upload-title">Drop your photo here</div>
+      <div class="upload-sub">PNG, JPG, WEBP, <strong style="color:#ff2d6b">HEIC</strong> — any size works</div>
+      <button class="upload-btn" onclick="document.getElementById('fileInput').click()">Browse File</button>
+      <input type="file" id="fileInput" accept="image/*,.heic,.heif">
+
+    </div>
+  </div>
+
+  <div class="source-preview" id="sourcePreview">
+    <div class="source-img-wrap">
+      <img id="sourceImg" src="" alt="Your photo">
+    </div>
+    <span class="source-label">Your Photo</span><br>
+    <button class="change-btn" onclick="document.getElementById('fileInput').click()">Change Photo</button>
+  </div>
+
+  <div class="generate-wrap" id="generateWrap" style="display:none">
+    <button class="generate-btn" id="generateBtn" onclick="generateAll()">✦ Generate 20 3D Styles</button>
+  </div>
+
+  <div class="progress-wrap" id="progressWrap">
+    <div class="progress-label" id="progressLabel">Generating style 1 of 20...</div>
+    <div class="progress-bar-outer">
+      <div class="progress-bar-inner" id="progressBar"></div>
+    </div>
+  </div>
+
+  <div class="results-section" id="resultsSection">
+    <div class="section-title">Your 3D Profiles</div>
+    <div class="section-subtitle">Click any card to preview · Click ↓ to download</div>
+    <div class="grid" id="resultsGrid"></div>
+  </div>
+</div>
+
+<div class="converting-toast" id="convertingToast">⚙️ Converting HEIC...</div>
+
+<script>
+let uploadedImage = null;
+
+const STYLES = [
+  { name: 'Neon Glow',      fn: applyNeonGlow },
+  { name: 'Chrome Metal',   fn: applyChromeMetal },
+  { name: 'Deep Space',     fn: applyDeepSpace },
+  { name: 'Vaporwave',      fn: applyVaporwave },
+  { name: 'Fire Ring',      fn: applyFireRing },
+  { name: 'Ice Crystal',    fn: applyIceCrystal },
+  { name: 'Gold Luxe',      fn: applyGoldLuxe },
+  { name: 'Matrix Code',    fn: applyMatrixCode },
+  { name: 'Hologram',       fn: applyHologram },
+  { name: 'Cyber Glitch',   fn: applyCyberGlitch },
+  { name: 'Aurora Borealis',fn: applyAurora },
+  { name: 'Dark Lord',      fn: applyDarkLord },
+  { name: 'Sunset Dusk',    fn: applySunsetDusk },
+  { name: 'Ocean Deep',     fn: applyOceanDeep },
+  { name: 'Electric Storm', fn: applyElectricStorm },
+  { name: 'Rose Gold',      fn: applyRoseGold },
+  { name: 'Midnight Blue',  fn: applyMidnightBlue },
+  { name: 'Toxic Green',    fn: applyToxicGreen },
+  { name: 'Sakura Dream',   fn: applySakuraDream },
+  { name: 'Galaxy Warp',    fn: applyGalaxyWarp },
+];
+
+// File input
+document.getElementById('fileInput').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (file) loadImage(file);
+});
+
+// Drag and drop
+const dropZone = document.getElementById('dropZone');
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file && file.type.startsWith('image/')) loadImage(file);
+});
+
+function showToast(msg) {
+  const t = document.getElementById('convertingToast');
+  t.textContent = msg;
+  t.classList.add('show');
+}
+function hideToast() {
+  document.getElementById('convertingToast').classList.remove('show');
+}
+
+async function loadImage(file) {
+  let processedFile = file;
+
+  const isHeic = file.type === 'image/heic' || file.type === 'image/heif' ||
+    file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif');
+
+  if (isHeic) {
+    showToast('⚙️ Converting HEIC to PNG...');
+    try {
+      const converted = await heic2any({ blob: file, toType: 'image/png', quality: 0.95 });
+      processedFile = Array.isArray(converted) ? converted[0] : converted;
+    } catch (err) {
+      hideToast();
+      alert('HEIC convert nahi hua. Please JPG/PNG try karein.\n\n' + err.message);
+      return;
+    }
+    hideToast();
+  }
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const img = new Image();
+    img.onload = () => {
+      uploadedImage = img;
+      document.getElementById('sourceImg').src = e.target.result;
+      document.getElementById('sourcePreview').classList.add('visible');
+      document.getElementById('generateWrap').style.display = 'block';
+      document.getElementById('resultsSection').classList.remove('visible');
+      document.getElementById('resultsGrid').innerHTML = '';
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(processedFile);
+}
+
+async function generateAll() {
+  if (!uploadedImage) return;
+  const btn = document.getElementById('generateBtn');
+  btn.disabled = true;
+
+  document.getElementById('progressWrap').classList.add('visible');
+  document.getElementById('resultsSection').classList.add('visible');
+  document.getElementById('resultsGrid').innerHTML = '';
+
+  for (let i = 0; i < STYLES.length; i++) {
+    const style = STYLES[i];
+    document.getElementById('progressLabel').textContent = `Generating: ${style.name} (${i+1} of ${STYLES.length})...`;
+    document.getElementById('progressBar').style.width = `${((i+1)/STYLES.length)*100}%`;
+
+    await new Promise(resolve => setTimeout(resolve, 60));
+    createCard(style, i);
+  }
+
+  document.getElementById('progressWrap').classList.remove('visible');
+  btn.disabled = false;
+  btn.textContent = '✦ Regenerate All Styles';
+}
+
+function createCard(style, index) {
+  const SIZE = 500;
+  const canvas = document.createElement('canvas');
+  canvas.width = SIZE; canvas.height = SIZE;
+
+  style.fn(canvas, uploadedImage, SIZE);
+
+  const card = document.createElement('div');
+  card.className = 'card';
+  card.style.animationDelay = `${index * 0.04}s`;
+
+  const wrap = document.createElement('div');
+  wrap.className = 'card-canvas-wrap';
+
+  const tag = document.createElement('div');
+  tag.className = 'style-tag';
+  tag.textContent = style.name;
+
+  wrap.appendChild(canvas);
+  wrap.appendChild(tag);
+
+  const info = document.createElement('div');
+  info.className = 'card-info';
+
+  const name = document.createElement('div');
+  name.className = 'card-name';
+  name.textContent = style.name;
+
+  const dlBtn = document.createElement('button');
+  dlBtn.className = 'download-btn';
+  dlBtn.title = 'Download';
+  dlBtn.innerHTML = `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 16l-6-6h4V4h4v6h4l-6 6zm-7 4h14v-2H5v2z"/></svg>`;
+  dlBtn.onclick = (e) => {
+    e.stopPropagation();
+    const link = document.createElement('a');
+    link.download = `3d-profile-${style.name.toLowerCase().replace(/\s+/g,'-')}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  };
+
+  info.appendChild(name);
+  info.appendChild(dlBtn);
+  card.appendChild(wrap);
+  card.appendChild(info);
+
+  document.getElementById('resultsGrid').appendChild(card);
+}
+
+// ─── HELPER FUNCTIONS ────────────────────────────────────────────
+
+function drawCircularPhoto(ctx, img, SIZE, scale = 0.62, yOffset = 0) {
+  const r = (SIZE * scale) / 2;
+  const cx = SIZE / 2;
+  const cy = SIZE / 2 + yOffset;
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.closePath();
+  ctx.clip();
+  ctx.drawImage(img, cx - r, cy - r, r * 2, r * 2);
+  ctx.restore();
+  return { cx, cy, r };
+}
+
+function drawRing(ctx, cx, cy, r, lineW, color1, color2) {
+  const g = ctx.createLinearGradient(cx - r, cy - r, cx + r, cy + r);
+  g.addColorStop(0, color1);
+  g.addColorStop(1, color2);
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(cx, cy, r + lineW / 2, 0, Math.PI * 2);
+  ctx.strokeStyle = g;
+  ctx.lineWidth = lineW;
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawGlowRing(ctx, cx, cy, r, color, blur = 20) {
+  ctx.save();
+  ctx.shadowColor = color;
+  ctx.shadowBlur = blur;
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 4;
+  ctx.stroke();
+  ctx.restore();
+}
+
+function draw3DShadow(ctx, cx, cy, r) {
+  const shadow = ctx.createRadialGradient(cx + r * 0.3, cy + r * 0.3, 0, cx, cy, r * 1.4);
+  shadow.addColorStop(0, 'rgba(0,0,0,0)');
+  shadow.addColorStop(1, 'rgba(0,0,0,0.5)');
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(cx, cy, r * 1.35, 0, Math.PI * 2);
+  ctx.fillStyle = shadow;
+  ctx.fill();
+  ctx.restore();
+}
+
+function draw3DHighlight(ctx, cx, cy, r) {
+  const hi = ctx.createRadialGradient(cx - r * 0.3, cy - r * 0.35, 0, cx, cy, r);
+  hi.addColorStop(0, 'rgba(255,255,255,0.35)');
+  hi.addColorStop(0.5, 'rgba(255,255,255,0.05)');
+  hi.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.fillStyle = hi;
+  ctx.fill();
+  ctx.restore();
+}
+
+// ─── STYLE FUNCTIONS ──────────────────────────────────────────────
+
+function applyNeonGlow(canvas, img, SIZE) {
+  const ctx = canvas.getContext('2d');
+  // BG
+  const bg = ctx.createRadialGradient(SIZE/2, SIZE/2, 0, SIZE/2, SIZE/2, SIZE/2);
+  bg.addColorStop(0, '#1a0033'); bg.addColorStop(1, '#000005');
+  ctx.fillStyle = bg; ctx.fillRect(0, 0, SIZE, SIZE);
+
+  // Rings
+  for (let i = 5; i >= 1; i--) {
+    ctx.save(); ctx.shadowColor = '#ff00ff'; ctx.shadowBlur = 15 * i;
+    ctx.beginPath(); ctx.arc(SIZE/2, SIZE/2, SIZE*0.38 + i*8, 0, Math.PI*2);
+    ctx.strokeStyle = `rgba(255,0,255,${0.1*i})`; ctx.lineWidth = 2; ctx.stroke();
+    ctx.restore();
+  }
+  for (let i = 3; i >= 1; i--) {
+    ctx.save(); ctx.shadowColor = '#00ffff'; ctx.shadowBlur = 15 * i;
+    ctx.beginPath(); ctx.arc(SIZE/2, SIZE/2, SIZE*0.41 + i*6, 0, Math.PI*2);
+    ctx.strokeStyle = `rgba(0,255,255,${0.15*i})`; ctx.lineWidth = 2; ctx.stroke();
+    ctx.restore();
+  }
+
+  draw3DShadow(ctx, SIZE/2, SIZE/2, SIZE*0.32);
+  const { cx, cy, r } = drawCircularPhoto(ctx, img, SIZE);
+  draw3DHighlight(ctx, cx, cy, r);
+  drawGlowRing(ctx, cx, cy, r + 6, '#ff00ff', 30);
+  drawGlowRing(ctx, cx, cy, r + 14, '#00ffff', 20);
+}
+
+function applyChromeMetal(canvas, img, SIZE) {
+  const ctx = canvas.getContext('2d');
+  const bg = ctx.createLinearGradient(0, 0, SIZE, SIZE);
+  bg.addColorStop(0, '#1a1a1a'); bg.addColorStop(0.5, '#2d2d2d'); bg.addColorStop(1, '#111');
+  ctx.fillStyle = bg; ctx.fillRect(0, 0, SIZE, SIZE);
+
+  // Metal rings
+  for (let i = 0; i < 5; i++) {
+    const g = ctx.createLinearGradient(0, 0, SIZE, SIZE);
+    g.addColorStop(0, '#888'); g.addColorStop(0.3, '#eee'); g.addColorStop(0.7, '#aaa'); g.addColorStop(1, '#555');
+    ctx.beginPath(); ctx.arc(SIZE/2, SIZE/2, SIZE*0.36 + i*10, 0, Math.PI*2);
+    ctx.strokeStyle = g; ctx.lineWidth = 3 - i*0.3; ctx.stroke();
+  }
+
+  draw3DShadow(ctx, SIZE/2, SIZE/2, SIZE*0.32);
+  const { cx, cy, r } = drawCircularPhoto(ctx, img, SIZE);
+  drawRing(ctx, cx, cy, r + 8, 12, '#cccccc', '#888888');
+  drawRing(ctx, cx, cy, r + 24, 4, '#ffffff', '#444444');
+  draw3DHighlight(ctx, cx, cy, r);
+}
+
+function applyDeepSpace(canvas, img, SIZE) {
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#000010'; ctx.fillRect(0, 0, SIZE, SIZE);
+
+  // Stars
+  for (let i = 0; i < 200; i++) {
+    const x = Math.random()*SIZE, y = Math.random()*SIZE, s = Math.random()*2;
+    ctx.beginPath(); ctx.arc(x, y, s, 0, Math.PI*2);
+    ctx.fillStyle = `rgba(255,255,255,${0.3+Math.random()*0.7})`; ctx.fill();
+  }
+
+  // Planet rings
+  ctx.save(); ctx.translate(SIZE/2, SIZE/2); ctx.scale(1, 0.25);
+  const pg = ctx.createLinearGradient(-SIZE*0.5, 0, SIZE*0.5, 0);
+  pg.addColorStop(0, 'transparent'); pg.addColorStop(0.2, 'rgba(120,80,200,0.6)');
+  pg.addColorStop(0.5, 'rgba(180,120,255,0.8)'); pg.addColorStop(0.8, 'rgba(120,80,200,0.6)'); pg.addColorStop(1, 'transparent');
+  ctx.beginPath(); ctx.ellipse(0, 0, SIZE*0.48, SIZE*0.48, 0, 0, Math.PI*2);
+  ctx.strokeStyle = pg; ctx.lineWidth = 18; ctx.stroke(); ctx.restore();
+
+  draw3DShadow(ctx, SIZE/2, SIZE/2, SIZE*0.32);
+  const { cx, cy, r } = drawCircularPhoto(ctx, img, SIZE);
+  drawGlowRing(ctx, cx, cy, r + 8, '#7c3aed', 25);
+  draw3DHighlight(ctx, cx, cy, r);
+}
+
+function applyVaporwave(canvas, img, SIZE) {
+  const ctx = canvas.getContext('2d');
+  const bg = ctx.createLinearGradient(0, 0, SIZE, SIZE);
+  bg.addColorStop(0, '#ff006e'); bg.addColorStop(0.5, '#8338ec'); bg.addColorStop(1, '#3a86ff');
+  ctx.fillStyle = bg; ctx.fillRect(0, 0, SIZE, SIZE);
+
+  // Grid lines
+  ctx.strokeStyle = 'rgba(255,255,255,0.15)'; ctx.lineWidth = 1;
+  for (let i = 0; i <= 10; i++) {
+    ctx.beginPath(); ctx.moveTo(i*(SIZE/10), 0); ctx.lineTo(i*(SIZE/10), SIZE); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0, i*(SIZE/10)); ctx.lineTo(SIZE, i*(SIZE/10)); ctx.stroke();
+  }
+
+  // Sun
+  const sun = ctx.createLinearGradient(SIZE/2, SIZE*0.1, SIZE/2, SIZE*0.6);
+  sun.addColorStop(0, '#ffbe0b'); sun.addColorStop(1, '#ff006e');
+  ctx.save(); ctx.beginPath(); ctx.arc(SIZE/2, SIZE*0.38, SIZE*0.42, 0, Math.PI*2);
+  ctx.fillStyle = sun; ctx.fill();
+  // Stripes
+  ctx.fillStyle = bg;
+  for (let i = 0; i < 6; i++) {
+    const y = SIZE*0.38 + i*SIZE*0.055;
+    ctx.fillRect(SIZE/2 - SIZE*0.42, y, SIZE*0.84, SIZE*0.025);
+  }
+  ctx.restore();
+
+  draw3DShadow(ctx, SIZE/2, SIZE/2, SIZE*0.32);
+  const { cx, cy, r } = drawCircularPhoto(ctx, img, SIZE);
+  drawRing(ctx, cx, cy, r+6, 8, '#ffbe0b', '#ff006e');
+  draw3DHighlight(ctx, cx, cy, r);
+}
+
+function applyFireRing(canvas, img, SIZE) {
+  const ctx = canvas.getContext('2d');
+  const bg = ctx.createRadialGradient(SIZE/2, SIZE/2, 0, SIZE/2, SIZE/2, SIZE/2);
+  bg.addColorStop(0, '#1a0500'); bg.addColorStop(1, '#000');
+  ctx.fillStyle = bg; ctx.fillRect(0, 0, SIZE, SIZE);
+
+  // Fire particles
+  for (let i = 0; i < 80; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const dist = SIZE * 0.34 + Math.random() * SIZE * 0.12;
+    const x = SIZE/2 + Math.cos(angle) * dist;
+    const y = SIZE/2 + Math.sin(angle) * dist;
+    const r2 = Math.random() * 12 + 4;
+    const fg = ctx.createRadialGradient(x, y, 0, x, y, r2);
+    fg.addColorStop(0, '#fff7aa'); fg.addColorStop(0.3, '#ff6600'); fg.addColorStop(1, 'transparent');
+    ctx.save(); ctx.shadowColor = '#ff4400'; ctx.shadowBlur = 20;
+    ctx.beginPath(); ctx.arc(x, y, r2, 0, Math.PI*2); ctx.fillStyle = fg; ctx.fill();
+    ctx.restore();
+  }
+
+  draw3DShadow(ctx, SIZE/2, SIZE/2, SIZE*0.32);
+  const { cx, cy, r } = drawCircularPhoto(ctx, img, SIZE);
+  drawGlowRing(ctx, cx, cy, r+5, '#ff4400', 30);
+  drawGlowRing(ctx, cx, cy, r+15, '#ff9900', 15);
+  draw3DHighlight(ctx, cx, cy, r);
+}
+
+function applyIceCrystal(canvas, img, SIZE) {
+  const ctx = canvas.getContext('2d');
+  const bg = ctx.createLinearGradient(0, 0, SIZE, SIZE);
+  bg.addColorStop(0, '#001233'); bg.addColorStop(1, '#000510');
+  ctx.fillStyle = bg; ctx.fillRect(0, 0, SIZE, SIZE);
+
+  // Ice shards
+  for (let i = 0; i < 12; i++) {
+    const angle = (i/12) * Math.PI*2;
+    const x1 = SIZE/2 + Math.cos(angle)*SIZE*0.38;
+    const y1 = SIZE/2 + Math.sin(angle)*SIZE*0.38;
+    const x2 = SIZE/2 + Math.cos(angle)*SIZE*0.48;
+    const y2 = SIZE/2 + Math.sin(angle)*SIZE*0.48;
+    ctx.save(); ctx.shadowColor = '#00d4ff'; ctx.shadowBlur = 15;
+    ctx.beginPath(); ctx.moveTo(SIZE/2, SIZE/2); ctx.lineTo(x1, y1); ctx.lineTo(x2, y2); ctx.closePath();
+    ctx.fillStyle = 'rgba(0,212,255,0.15)'; ctx.fill();
+    ctx.strokeStyle = 'rgba(0,212,255,0.6)'; ctx.lineWidth = 1; ctx.stroke();
+    ctx.restore();
+  }
+
+  draw3DShadow(ctx, SIZE/2, SIZE/2, SIZE*0.32);
+  const { cx, cy, r } = drawCircularPhoto(ctx, img, SIZE);
+  drawGlowRing(ctx, cx, cy, r+5, '#00d4ff', 25);
+  drawRing(ctx, cx, cy, r+15, 3, '#aae8ff', '#0099ff');
+  draw3DHighlight(ctx, cx, cy, r);
+
+  // Sparkle overlay
+  ctx.save(); ctx.globalAlpha = 0.4;
+  for (let i = 0; i < 30; i++) {
+    const angle = Math.random()*Math.PI*2, d = r + 5 + Math.random()*30;
+    ctx.beginPath();
+    ctx.arc(cx + Math.cos(angle)*d, cy + Math.sin(angle)*d, 1.5, 0, Math.PI*2);
+    ctx.fillStyle = '#ffffff'; ctx.fill();
+  }
+  ctx.restore();
+}
+
+function applyGoldLuxe(canvas, img, SIZE) {
+  const ctx = canvas.getContext('2d');
+  const bg = ctx.createLinearGradient(0, 0, SIZE, SIZE);
+  bg.addColorStop(0, '#1a1000'); bg.addColorStop(0.5, '#2a1a00'); bg.addColorStop(1, '#0d0800');
+  ctx.fillStyle = bg; ctx.fillRect(0, 0, SIZE, SIZE);
+
+  // Gold decorations
+  ctx.save(); ctx.strokeStyle = 'rgba(255,215,0,0.15)'; ctx.lineWidth = 1;
+  for (let i = 1; i <= 8; i++) {
+    ctx.beginPath(); ctx.arc(SIZE/2, SIZE/2, i*SIZE*0.06, 0, Math.PI*2); ctx.stroke();
+  }
+  ctx.restore();
+
+  draw3DShadow(ctx, SIZE/2, SIZE/2, SIZE*0.32);
+  const { cx, cy, r } = drawCircularPhoto(ctx, img, SIZE);
+
+  // Gold ring
+  const gg = ctx.createLinearGradient(cx-r, cy-r, cx+r, cy+r);
+  gg.addColorStop(0, '#ffd700'); gg.addColorStop(0.3, '#fff4a3'); gg.addColorStop(0.6, '#c8980a'); gg.addColorStop(1, '#ffd700');
+  ctx.save(); ctx.shadowColor = '#ffd700'; ctx.shadowBlur = 20;
+  ctx.beginPath(); ctx.arc(cx, cy, r+12, 0, Math.PI*2);
+  ctx.strokeStyle = gg; ctx.lineWidth = 12; ctx.stroke();
+  ctx.restore();
+
+  // Diamond dots
+  for (let i = 0; i < 12; i++) {
+    const a = (i/12)*Math.PI*2;
+    const dx = cx + Math.cos(a)*(r+22), dy = cy + Math.sin(a)*(r+22);
+    ctx.save(); ctx.shadowColor = '#fff4a3'; ctx.shadowBlur = 8;
+    ctx.beginPath(); ctx.arc(dx, dy, 4, 0, Math.PI*2);
+    ctx.fillStyle = '#fff4a3'; ctx.fill(); ctx.restore();
+  }
+
+  draw3DHighlight(ctx, cx, cy, r);
+}
+
+function applyMatrixCode(canvas, img, SIZE) {
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#000500'; ctx.fillRect(0, 0, SIZE, SIZE);
+
+  // Matrix rain
+  ctx.font = '10px monospace';
+  const chars = '01アイウエオカキクケコ'.split('');
+  for (let i = 0; i < 80; i++) {
+    const x = Math.random()*SIZE, y = Math.random()*SIZE;
+    const alpha = Math.random()*0.7 + 0.1;
+    ctx.fillStyle = `rgba(0,255,65,${alpha})`;
+    ctx.fillText(chars[Math.floor(Math.random()*chars.length)], x, y);
+  }
+
+  draw3DShadow(ctx, SIZE/2, SIZE/2, SIZE*0.32);
+  const { cx, cy, r } = drawCircularPhoto(ctx, img, SIZE);
+  drawGlowRing(ctx, cx, cy, r+5, '#00ff41', 20);
+  drawGlowRing(ctx, cx, cy, r+18, '#00ff41', 10);
+  draw3DHighlight(ctx, cx, cy, r);
+
+  // Green tint
+  ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.clip();
+  ctx.fillStyle = 'rgba(0,255,65,0.1)'; ctx.fillRect(0, 0, SIZE, SIZE);
+  ctx.restore();
+}
+
+function applyHologram(canvas, img, SIZE) {
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#00050f'; ctx.fillRect(0, 0, SIZE, SIZE);
+
+  // Scan lines
+  for (let y = 0; y < SIZE; y += 4) {
+    ctx.fillStyle = 'rgba(0,200,255,0.03)'; ctx.fillRect(0, y, SIZE, 2);
+  }
+  // Holo rings
+  for (let i = 1; i <= 8; i++) {
+    ctx.save(); ctx.shadowColor = '#00c8ff'; ctx.shadowBlur = 8;
+    ctx.beginPath(); ctx.arc(SIZE/2, SIZE/2, i*SIZE*0.055, 0, Math.PI*2);
+    ctx.strokeStyle = `rgba(0,200,255,${0.05*i})`; ctx.lineWidth = 1; ctx.stroke();
+    ctx.restore();
+  }
+
+  // Semi-transparent image
+  ctx.save(); ctx.globalAlpha = 0.85;
+  const { cx, cy, r } = drawCircularPhoto(ctx, img, SIZE);
+  ctx.restore();
+
+  // Hologram color overlay
+  ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.clip();
+  const hg = ctx.createLinearGradient(cx-r, cy-r, cx+r, cy+r);
+  hg.addColorStop(0, 'rgba(0,255,255,0.2)'); hg.addColorStop(0.5, 'rgba(255,0,255,0.1)'); hg.addColorStop(1, 'rgba(0,255,255,0.2)');
+  ctx.fillStyle = hg; ctx.fillRect(0,0,SIZE,SIZE); ctx.restore();
+
+  // Scanlines on photo
+  ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.clip();
+  for (let y = 0; y < SIZE; y += 3) { ctx.fillStyle = 'rgba(0,0,0,0.15)'; ctx.fillRect(0, y, SIZE, 1); }
+  ctx.restore();
+
+  drawGlowRing(ctx, cx, cy, r+5, '#00c8ff', 20);
+  draw3DHighlight(ctx, cx, cy, r);
+}
+
+function applyCyberGlitch(canvas, img, SIZE) {
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#0a0005'; ctx.fillRect(0, 0, SIZE, SIZE);
+
+  // Glitch BG lines
+  for (let i = 0; i < 20; i++) {
+    const y = Math.random()*SIZE, h = Math.random()*4+1;
+    ctx.fillStyle = `rgba(255,0,${Math.random()*200},${Math.random()*0.3})`;
+    ctx.fillRect(0, y, SIZE, h);
+  }
+
+  draw3DShadow(ctx, SIZE/2, SIZE/2, SIZE*0.32);
+  const { cx, cy, r } = drawCircularPhoto(ctx, img, SIZE);
+
+  // Glitch offset copies
+  for (const [ox, col] of [[-8, 'rgba(255,0,100,0.4)'], [8, 'rgba(0,255,200,0.4)']]) {
+    ctx.save(); ctx.translate(ox, 0);
+    ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.clip();
+    ctx.drawImage(img, cx-r, cy-r, r*2, r*2);
+    ctx.fillStyle = col; ctx.fillRect(0, 0, SIZE, SIZE);
+    ctx.restore();
+  }
+
+  drawGlowRing(ctx, cx, cy, r+5, '#ff2d6b', 20);
+  drawGlowRing(ctx, cx, cy, r+5, '#00ffcc', 10);
+
+  // Glitch strips on photo
+  ctx.save();
+  for (let i = 0; i < 6; i++) {
+    const gy = cy - r + Math.random()*r*2, gh = Math.random()*8+2;
+    ctx.fillStyle = `rgba(255,0,${Math.floor(Math.random()*255)},0.2)`;
+    ctx.fillRect(cx-r, gy, r*2, gh);
+  }
+  ctx.restore();
+  draw3DHighlight(ctx, cx, cy, r);
+}
+
+function applyAurora(canvas, img, SIZE) {
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#000510'; ctx.fillRect(0, 0, SIZE, SIZE);
+
+  // Aurora waves
+  for (let i = 0; i < 5; i++) {
+    const y = SIZE * (0.2 + i * 0.15);
+    const ag = ctx.createLinearGradient(0, y, SIZE, y+80);
+    ag.addColorStop(0, 'rgba(0,255,180,0)'); ag.addColorStop(0.3, `rgba(${i*50},255,${180-i*30},0.2)`);
+    ag.addColorStop(0.7, `rgba(100,${200-i*20},255,0.15)`); ag.addColorStop(1, 'rgba(150,0,255,0)');
+    ctx.fillStyle = ag;
+    ctx.beginPath(); ctx.moveTo(0, y);
+    for (let x = 0; x <= SIZE; x += 20) {
+      ctx.lineTo(x, y + Math.sin(x/60 + i)*25);
+    }
+    ctx.lineTo(SIZE, SIZE); ctx.lineTo(0, SIZE); ctx.closePath(); ctx.fill();
+  }
+
+  draw3DShadow(ctx, SIZE/2, SIZE/2, SIZE*0.32);
+  const { cx, cy, r } = drawCircularPhoto(ctx, img, SIZE);
+  const ag2 = ctx.createLinearGradient(cx-r, cy-r, cx+r, cy+r);
+  ag2.addColorStop(0, '#00ffb4'); ag2.addColorStop(0.5, '#7c3aed'); ag2.addColorStop(1, '#00d4ff');
+  ctx.save(); ctx.shadowColor = '#00ffb4'; ctx.shadowBlur = 25;
+  ctx.beginPath(); ctx.arc(cx, cy, r+8, 0, Math.PI*2);
+  ctx.strokeStyle = ag2; ctx.lineWidth = 6; ctx.stroke(); ctx.restore();
+  draw3DHighlight(ctx, cx, cy, r);
+}
+
+function applyDarkLord(canvas, img, SIZE) {
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#050005'; ctx.fillRect(0, 0, SIZE, SIZE);
+
+  // Dark sigil
+  ctx.save(); ctx.strokeStyle = 'rgba(150,0,50,0.3)'; ctx.lineWidth = 1;
+  for (let i = 0; i < 8; i++) {
+    const a = (i/8)*Math.PI*2;
+    ctx.beginPath(); ctx.moveTo(SIZE/2, SIZE/2);
+    ctx.lineTo(SIZE/2 + Math.cos(a)*SIZE*0.45, SIZE/2 + Math.sin(a)*SIZE*0.45); ctx.stroke();
+  }
+  ctx.beginPath(); ctx.arc(SIZE/2, SIZE/2, SIZE*0.4, 0, Math.PI*2);
+  ctx.strokeStyle = 'rgba(150,0,50,0.4)'; ctx.stroke(); ctx.restore();
+
+  draw3DShadow(ctx, SIZE/2, SIZE/2, SIZE*0.32);
+  const { cx, cy, r } = drawCircularPhoto(ctx, img, SIZE);
+
+  // Dark overlay on photo
+  ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.clip();
+  const dg = ctx.createLinearGradient(cx-r, cy, cx+r, cy);
+  dg.addColorStop(0, 'rgba(100,0,30,0.4)'); dg.addColorStop(1, 'rgba(50,0,80,0.4)');
+  ctx.fillStyle = dg; ctx.fillRect(0, 0, SIZE, SIZE); ctx.restore();
+
+  drawGlowRing(ctx, cx, cy, r+6, '#aa0033', 25);
+  drawGlowRing(ctx, cx, cy, r+20, '#550044', 15);
+  draw3DHighlight(ctx, cx, cy, r);
+}
+
+function applySunsetDusk(canvas, img, SIZE) {
+  const ctx = canvas.getContext('2d');
+  const bg = ctx.createLinearGradient(0, 0, 0, SIZE);
+  bg.addColorStop(0, '#0f0520'); bg.addColorStop(0.4, '#4a1a00'); bg.addColorStop(0.7, '#ff4e00'); bg.addColorStop(1, '#ff9e00');
+  ctx.fillStyle = bg; ctx.fillRect(0, 0, SIZE, SIZE);
+
+  // Sun
+  ctx.save(); ctx.shadowColor = '#ffaa00'; ctx.shadowBlur = 40;
+  ctx.beginPath(); ctx.arc(SIZE/2, SIZE*0.72, SIZE*0.25, 0, Math.PI*2);
+  const sg = ctx.createRadialGradient(SIZE/2, SIZE*0.72, 0, SIZE/2, SIZE*0.72, SIZE*0.25);
+  sg.addColorStop(0, '#ffffaa'); sg.addColorStop(0.5, '#ffaa00'); sg.addColorStop(1, '#ff4400');
+  ctx.fillStyle = sg; ctx.fill(); ctx.restore();
+
+  draw3DShadow(ctx, SIZE/2, SIZE/2, SIZE*0.32);
+  const { cx, cy, r } = drawCircularPhoto(ctx, img, SIZE);
+  drawRing(ctx, cx, cy, r+7, 10, '#ff9e00', '#ff4e00');
+  draw3DHighlight(ctx, cx, cy, r);
+}
+
+function applyOceanDeep(canvas, img, SIZE) {
+  const ctx = canvas.getContext('2d');
+  const bg = ctx.createLinearGradient(0, 0, 0, SIZE);
+  bg.addColorStop(0, '#000520'); bg.addColorStop(1, '#001540');
+  ctx.fillStyle = bg; ctx.fillRect(0, 0, SIZE, SIZE);
+
+  // Waves
+  ctx.save(); ctx.strokeStyle = 'rgba(0,150,255,0.15)'; ctx.lineWidth = 1;
+  for (let i = 0; i < 12; i++) {
+    const y = i*SIZE/12;
+    ctx.beginPath(); ctx.moveTo(0, y);
+    for (let x = 0; x <= SIZE; x += 10) { ctx.lineTo(x, y + Math.sin(x/40+i)*10); }
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  // Bubbles
+  for (let i = 0; i < 25; i++) {
+    const bx = Math.random()*SIZE, by = Math.random()*SIZE, br = Math.random()*8+2;
+    ctx.save(); ctx.shadowColor = '#00aaff'; ctx.shadowBlur = 10;
+    ctx.beginPath(); ctx.arc(bx, by, br, 0, Math.PI*2);
+    ctx.strokeStyle = 'rgba(0,180,255,0.5)'; ctx.lineWidth = 1; ctx.stroke(); ctx.restore();
+  }
+
+  draw3DShadow(ctx, SIZE/2, SIZE/2, SIZE*0.32);
+  const { cx, cy, r } = drawCircularPhoto(ctx, img, SIZE);
+  drawGlowRing(ctx, cx, cy, r+6, '#0088ff', 20);
+  draw3DHighlight(ctx, cx, cy, r);
+}
+
+function applyElectricStorm(canvas, img, SIZE) {
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#020209'; ctx.fillRect(0, 0, SIZE, SIZE);
+
+  // Lightning bolts
+  const drawBolt = (x1, y1, x2, y2, w, alpha) => {
+    const dx = x2-x1, dy = y2-y1, len = Math.sqrt(dx*dx+dy*dy);
+    const segs = Math.floor(len/20)+2;
+    let pts = [[x1,y1]];
+    for (let i = 1; i < segs; i++) {
+      const t = i/segs, px = x1+dx*t+( Math.random()-0.5)*30, py = y1+dy*t+(Math.random()-0.5)*30;
+      pts.push([px, py]);
+    }
+    pts.push([x2, y2]);
+    ctx.save(); ctx.shadowColor = '#aadfff'; ctx.shadowBlur = 15;
+    ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]);
+    pts.slice(1).forEach(([px, py]) => ctx.lineTo(px, py));
+    ctx.strokeStyle = `rgba(150,200,255,${alpha})`; ctx.lineWidth = w; ctx.stroke(); ctx.restore();
+  };
+
+  for (let i = 0; i < 8; i++) {
+    const angle = Math.random()*Math.PI*2, d1 = SIZE*0.35, d2 = SIZE*0.5;
+    drawBolt(
+      SIZE/2 + Math.cos(angle)*d1, SIZE/2 + Math.sin(angle)*d1,
+      SIZE/2 + Math.cos(angle+Math.random()*0.5)*d2, SIZE/2 + Math.sin(angle+Math.random()*0.5)*d2,
+      Math.random()*2+1, 0.6
+    );
+  }
+
+  draw3DShadow(ctx, SIZE/2, SIZE/2, SIZE*0.32);
+  const { cx, cy, r } = drawCircularPhoto(ctx, img, SIZE);
+  drawGlowRing(ctx, cx, cy, r+5, '#aaddff', 30);
+  drawGlowRing(ctx, cx, cy, r+18, '#5599ff', 15);
+  draw3DHighlight(ctx, cx, cy, r);
+}
+
+function applyRoseGold(canvas, img, SIZE) {
+  const ctx = canvas.getContext('2d');
+  const bg = ctx.createLinearGradient(0, 0, SIZE, SIZE);
+  bg.addColorStop(0, '#1a0808'); bg.addColorStop(0.5, '#200d0d'); bg.addColorStop(1, '#0d0808');
+  ctx.fillStyle = bg; ctx.fillRect(0, 0, SIZE, SIZE);
+
+  // Petal pattern
+  for (let i = 0; i < 12; i++) {
+    const a = (i/12)*Math.PI*2;
+    ctx.save(); ctx.translate(SIZE/2, SIZE/2); ctx.rotate(a);
+    ctx.beginPath(); ctx.ellipse(SIZE*0.3, 0, SIZE*0.08, SIZE*0.04, 0, 0, Math.PI*2);
+    ctx.fillStyle = 'rgba(200,100,100,0.1)'; ctx.fill();
+    ctx.restore();
+  }
+
+  draw3DShadow(ctx, SIZE/2, SIZE/2, SIZE*0.32);
+  const { cx, cy, r } = drawCircularPhoto(ctx, img, SIZE);
+  const rg = ctx.createLinearGradient(cx-r, cy-r, cx+r, cy+r);
+  rg.addColorStop(0, '#e8a0a0'); rg.addColorStop(0.3, '#f4c8b0'); rg.addColorStop(0.6, '#c97070'); rg.addColorStop(1, '#e8a0a0');
+  ctx.save(); ctx.shadowColor = '#e8a0a0'; ctx.shadowBlur = 20;
+  ctx.beginPath(); ctx.arc(cx, cy, r+10, 0, Math.PI*2); ctx.strokeStyle = rg; ctx.lineWidth = 10; ctx.stroke(); ctx.restore();
+  draw3DHighlight(ctx, cx, cy, r);
+}
+
+function applyMidnightBlue(canvas, img, SIZE) {
+  const ctx = canvas.getContext('2d');
+  const bg = ctx.createLinearGradient(0, 0, SIZE, SIZE);
+  bg.addColorStop(0, '#000820'); bg.addColorStop(1, '#000510');
+  ctx.fillStyle = bg; ctx.fillRect(0, 0, SIZE, SIZE);
+
+  // Moon-like halo
+  for (let i = 4; i >= 1; i--) {
+    ctx.save(); ctx.shadowColor = '#3a6fff'; ctx.shadowBlur = 20*i;
+    ctx.beginPath(); ctx.arc(SIZE/2, SIZE/2, SIZE*0.38+i*6, 0, Math.PI*2);
+    ctx.strokeStyle = `rgba(58,111,255,${0.1*i})`; ctx.lineWidth = 2; ctx.stroke(); ctx.restore();
+  }
+
+  draw3DShadow(ctx, SIZE/2, SIZE/2, SIZE*0.32);
+  const { cx, cy, r } = drawCircularPhoto(ctx, img, SIZE);
+  drawGlowRing(ctx, cx, cy, r+6, '#3a6fff', 20);
+  drawRing(ctx, cx, cy, r+18, 3, '#6699ff', '#1133aa');
+  draw3DHighlight(ctx, cx, cy, r);
+}
+
+function applyToxicGreen(canvas, img, SIZE) {
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#000a00'; ctx.fillRect(0, 0, SIZE, SIZE);
+
+  // Toxic drips
+  for (let i = 0; i < 15; i++) {
+    const tx = Math.random()*SIZE, ty = Math.random()*SIZE;
+    const tg = ctx.createRadialGradient(tx, ty, 0, tx, ty, SIZE*0.08);
+    tg.addColorStop(0, 'rgba(0,255,50,0.4)'); tg.addColorStop(1, 'transparent');
+    ctx.fillStyle = tg; ctx.beginPath(); ctx.arc(tx, ty, SIZE*0.08, 0, Math.PI*2); ctx.fill();
+  }
+
+  draw3DShadow(ctx, SIZE/2, SIZE/2, SIZE*0.32);
+  const { cx, cy, r } = drawCircularPhoto(ctx, img, SIZE);
+
+  // Green tint
+  ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.clip();
+  ctx.fillStyle = 'rgba(0,255,50,0.15)'; ctx.fillRect(0, 0, SIZE, SIZE); ctx.restore();
+
+  drawGlowRing(ctx, cx, cy, r+5, '#00ff32', 25);
+  drawGlowRing(ctx, cx, cy, r+18, '#88ff00', 12);
+  draw3DHighlight(ctx, cx, cy, r);
+}
+
+function applySakuraDream(canvas, img, SIZE) {
+  const ctx = canvas.getContext('2d');
+  const bg = ctx.createLinearGradient(0, 0, 0, SIZE);
+  bg.addColorStop(0, '#1a0010'); bg.addColorStop(1, '#0d0010');
+  ctx.fillStyle = bg; ctx.fillRect(0, 0, SIZE, SIZE);
+
+  // Petals
+  const drawPetal = (x, y, s, a) => {
+    ctx.save(); ctx.translate(x, y); ctx.rotate(a); ctx.globalAlpha = Math.random()*0.6+0.2;
+    ctx.beginPath(); ctx.ellipse(0, 0, s, s*0.6, 0, 0, Math.PI*2);
+    ctx.fillStyle = `hsl(${320+Math.random()*40},${60+Math.random()*30}%,${60+Math.random()*20}%)`;
+    ctx.fill(); ctx.restore();
+  };
+  for (let i = 0; i < 40; i++) drawPetal(Math.random()*SIZE, Math.random()*SIZE, Math.random()*10+4, Math.random()*Math.PI*2);
+
+  draw3DShadow(ctx, SIZE/2, SIZE/2, SIZE*0.32);
+  const { cx, cy, r } = drawCircularPhoto(ctx, img, SIZE);
+  drawGlowRing(ctx, cx, cy, r+6, '#ff80bf', 20);
+  draw3DHighlight(ctx, cx, cy, r);
+}
+
+function applyGalaxyWarp(canvas, img, SIZE) {
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#000008'; ctx.fillRect(0, 0, SIZE, SIZE);
+
+  // Galaxy swirl
+  for (let i = 0; i < 300; i++) {
+    const angle = Math.random()*Math.PI*8, dist = Math.random()*SIZE*0.45;
+    const x = SIZE/2 + Math.cos(angle + dist/40) * dist;
+    const y = SIZE/2 + Math.sin(angle + dist/40) * dist;
+    const bright = 1 - dist/(SIZE*0.45);
+    ctx.beginPath(); ctx.arc(x, y, Math.random()*1.5, 0, Math.PI*2);
+    const hue = 200 + dist/SIZE*160;
+    ctx.fillStyle = `hsla(${hue},80%,${60+bright*40}%,${bright*0.8})`;
+    ctx.fill();
+  }
+
+  // Core glow
+  const cg = ctx.createRadialGradient(SIZE/2, SIZE/2, 0, SIZE/2, SIZE/2, SIZE*0.2);
+  cg.addColorStop(0, 'rgba(255,255,255,0.3)'); cg.addColorStop(1, 'transparent');
+  ctx.fillStyle = cg; ctx.fillRect(0, 0, SIZE, SIZE);
+
+  draw3DShadow(ctx, SIZE/2, SIZE/2, SIZE*0.32);
+  const { cx, cy, r } = drawCircularPhoto(ctx, img, SIZE);
+  drawGlowRing(ctx, cx, cy, r+5, '#8844ff', 25);
+  drawGlowRing(ctx, cx, cy, r+18, '#4488ff', 15);
+  draw3DHighlight(ctx, cx, cy, r);
+}
+</script>
+</body>
+</html>
