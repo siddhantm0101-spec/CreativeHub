@@ -4262,5 +4262,36 @@ window.addEventListener('load', () => {
 });
 </script>
 </body>
+  <!-- Upload Section -->
+<div style="margin: 20px; padding: 20px; border: 2px dashed #aaa; border-radius: 10px; text-align: center;">
+  <h2>Upload Your Material</h2>
+  
+  <input type="file" id="fileUpload" multiple>
+  
+  <br><br>
+  
+  <button onclick="uploadFile()">Upload</button>
+  
+  <p id="status"></p>
+</div>
+
+<script>
+function uploadFile() {
+    const input = document.getElementById('fileUpload');
+    const files = input.files;
+
+    if (files.length === 0) {
+        document.getElementById('status').innerText = "Please select a file!";
+        return;
+    }
+
+    let fileNames = "";
+    for (let i = 0; i < files.length; i++) {
+        fileNames += files[i].name + "\n";
+    }
+
+    document.getElementById('status').innerText = "Uploaded Files:\n" + fileNames;
+}
+</script>
 </html>
 
