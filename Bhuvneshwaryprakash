@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Happy Teacher's Day - Bhuvneshwary Ma'am</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&family=Great+Vibes&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #fefae0 0%, #faedcd 50%, #e9edc9 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            color: #333;
+        }
+
+        .card-container {
+            background: #ffffff;
+            max-width: 600px;
+            width: 100%;
+            border-radius: 24px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+            overflow: hidden;
+            text-align: center;
+            position: relative;
+            border: 2px solid #e0e5b6;
+        }
+
+        .header-banner {
+            background: linear-gradient(135deg, #d4a373, #ccd5ae);
+            padding: 40px 20px 50px 20px;
+            color: white;
+            position: relative;
+        }
+
+        .header-banner h1 {
+            font-family: 'Great Vibes', cursive;
+            font-size: 3.5rem;
+            margin-bottom: 5px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.15);
+            color: #3a322b;
+        }
+
+        .header-banner p {
+            font-size: 1.1rem;
+            letter-spacing: 2px;
+            font-weight: 600;
+            color: #585123;
+            text-transform: uppercase;
+        }
+
+        .image-wrapper {
+            margin: -50px auto 20px auto;
+            width: 220px;
+            height: 220px;
+            border-radius: 50%;
+            border: 6px solid #ffffff;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            overflow: hidden;
+            position: relative;
+            background: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .image-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .content {
+            padding: 10px 35px 35px 35px;
+        }
+
+        .teacher-name {
+            font-size: 2.2rem;
+            color: #6b705c;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .quote {
+            font-style: italic;
+            color: #b5838d;
+            font-size: 1.05rem;
+            margin-bottom: 25px;
+            font-weight: 600;
+        }
+
+        .message {
+            font-size: 1.05rem;
+            line-height: 1.8;
+            color: #4a4e69;
+            margin-bottom: 25px;
+            background: #f8f9fa;
+            padding: 22px;
+            border-radius: 16px;
+            border-left: 5px solid #cb997e;
+            text-align: left;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.02);
+        }
+
+        .footer {
+            background: #f7f5f0;
+            padding: 18px;
+            font-size: 1rem;
+            color: #6c757d;
+            border-top: 1px solid #e9ecef;
+            font-weight: 600;
+        }
+
+        .decor-star {
+            color: #ffb703;
+            font-size: 1.2rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="card-container">
+        <div class="header-banner">
+            <h1>Happy Teacher's Day</h1>
+            <p>शिक्षक दिवस की हार्दिक शुभकामनाएं</p>
+        </div>
+
+        <!-- फोटो लगाने के लिए नीचे img tag का उपयोग करें -->
+        <div class="image-wrapper">
+            <img src="mam_photo.jpg" alt="Bhuvneshwary Ma'am">
+        </div>
+
+        <div class="content">
+            <h2 class="teacher-name">Bhuvneshwary Ma'am</h2>
+            
+            <p class="quote">
+                "A truly special teacher inspires hope, sparks imagination, and instills a lifelong love for learning."
+            </p>
+
+            <div class="message">
+                <p>
+                    <strong>आदरणीय भुवनेश्वरी मैम,</strong><br><br>
+                    शिक्षक दिवस के इस पावन अवसर पर आपको ढेर सारी शुभकामनाएं! आपके मार्गदर्शन, ज्ञान और स्नेह के लिए हमारा हृदय से धन्यवाद। आपकी प्रेरणा और सही सीख हमेशा हमारे जीवन का मार्गदर्शन करती रहेगी।
+                    <br><br>
+                    आपके उज्ज्वल भविष्य, उत्तम स्वास्थ्य और अपार प्रसन्नता की कामना करते हैं।
+                </p>
+            </div>
+
+            <p style="color: #6b705c; font-weight: 600; font-size: 0.95rem;">
+                <span class="decor-star">★</span> Thank you for being an amazing mentor! <span class="decor-star">★</span>
+            </p>
+        </div>
+
+        <div class="footer">
+            With Lots of Respect & Gratitude ❤️
+        </div>
+    </div>
+
+</body>
+</html>
